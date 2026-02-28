@@ -383,6 +383,8 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
     const handles = handleMap[direction];
     const newNodeId = crypto.randomUUID();
 
+    console.log("[QuickAdd] Adding node and edge", { sourceNodeId, newNodeId, direction });
+
     // Add new node
     store.addNode({
       id: newNodeId,
@@ -394,15 +396,12 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
       data: { label: "Microservice", category: "backend", tech: "service" },
     });
 
-    // Add edge connection
-    store.addEdge({
-      id: `${sourceNodeId}-${newNodeId}`,
+    // Add edge connection using onConnect
+    store.onConnect({
       source: sourceNodeId,
       target: newNodeId,
       sourceHandle: handles.source,
       targetHandle: handles.target,
-      type: "default",
-      data: { label: "HTTP" },
     });
 
     sendUpdateImmediate();
