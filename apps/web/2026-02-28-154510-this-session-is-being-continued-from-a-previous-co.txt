@@ -1,0 +1,153 @@
+
+╭─── Claude Code v2.1.63 ──────────────────────────────────────────────────────╮
+│                                                    │ Tips for getting        │
+│                Welcome back Dmitry!                │ started                 │
+│                                                    │ Run /init to create a … │
+│                       ▐▛███▜▌                      │ ─────────────────────── │
+│                      ▝▜█████▛▘                     │ Recent activity         │
+│                        ▘▘ ▝▝                       │ No recent activity      │
+│                                                    │                         │
+│    Sonnet 4.6 · Claude Pro · qweqwy@gmail.com's    │                         │
+│    Organization                                    │                         │
+│             ~/project/techflow/apps/web            │                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+✻ Conversation compacted (ctrl+o for history)
+
+  ⎿  Referenced file src/components/DiagramEditor.tsx
+  ⎿  Read src/components/panels/TextAnnotationPanel.tsx (118 lines)
+  ⎿  Read src/components/panels/StickyNotePanel.tsx (88 lines)
+  ⎿  Read src/components/AlignmentToolbar.tsx (57 lines)
+  ⎿  Referenced file src/components/panels/NodePropertiesPanel.tsx
+
+● Read 2 files (ctrl+o to expand)
+
+● Now I can see both issues causing the infinite loop:
+
+  1. setSelectedNodeIds always sets new state even when values haven't changed
+  2. onSelectionChange depends on the entire store object which changes on every
+   state update, causing the callback to be recreated, which ReactFlow picks up
+  and fires again
+
+  Let me fix both:
+
+● Update(src/stores/diagramStore.ts)
+  ⎿  Added 4 lines, removed 1 line
+      129    setTool: (tool) => set({ tool, selectedNodeId: null, selecte
+           dEdgeId: null }),
+      130    setSelectedNodeId: (id) => set({ selectedNodeId: id, selecte
+           dEdgeId: null }),
+      131    setSelectedEdgeId: (id) => set({ selectedEdgeId: id, selecte
+           dNodeId: null }),
+      132 -  setSelectedNodeIds: (ids) => set({ selectedNodeIds: ids }), 
+      132 +  setSelectedNodeIds: (ids) => set((s) => {                   
+      133 +    if (ids.length === s.selectedNodeIds.length && ids.every((
+          +id, i) => id === s.selectedNodeIds[i])) return s;             
+      134 +    return { selectedNodeIds: ids };                          
+      135 +  }),                                                         
+      136  
+      137    highlightPath: (nodeId) => {
+      138      const { edges } = get();
+
+● Now fix the onSelectionChange callback in DiagramEditor.tsx to use a stable
+  store action reference instead of the full store object:
+
+● Update(src/components/DiagramEditor.tsx)
+  ⎿  Added 2 lines
+      57  
+      58  function EditorInner({ diagramId, onBack }: Props) {
+      59    const store = useDiagramStore();
+      60 +  // Stable action reference — Zustand actions don't change bet
+         +ween renders                                                   
+      61 +  const setSelectedNodeIds = useDiagramStore((s) => s.setSelect
+         +edNodeIds);                                                    
+      62    const [rfInstance, setRfInstance] = useState<ReactFlowInstanc
+          e | null>(null);
+      63    const [saving, setSaving] = useState(false);
+      64    const [wsConnected, setWsConnected] = useState(false);
+
+● Update(src/components/DiagramEditor.tsx)
+  ⎿  Added 5 lines, removed 3 lines
+      156      }));
+      157    }, [store.edges, store.highlightedEdgeIds]);
+      158  
+      159 -  // Multi-selection tracking                                 
+      159 +  // Multi-selection tracking — must use stable action ref, NO
+          +T `store`,                                                    
+      160 +  // because `store` changes reference on every state update a
+          +nd would                                                      
+      161 +  // cause ReactFlow to re-fire onSelectionChange → infinite l
+          +oop.                                                          
+      162    const onSelectionChange = useCallback(({ nodes }: OnSelectio
+           nChangeParams) => {
+      161 -    store.setSelectedNodeIds(nodes.map((n) => n.id));         
+      162 -  }, [store]);                                                
+      163 +    setSelectedNodeIds(nodes.map((n) => n.id));               
+      164 +  }, [setSelectedNodeIds]);                                   
+      165  
+      166    // Node click
+      167    const onNodeClick: NodeMouseHandler = useCallback((_e, node)
+            => {
+
+● Now let me verify the changes look correct:
+
+● Read 2 files (ctrl+o to expand)
+
+● Both fixes are in place. Let me verify the dev server is running and confirm
+  there's no TypeScript error by doing a quick build check:
+
+● Bash(npx tsc --noEmit 2>&1 | head -30)
+  ⎿  (No output)
+
+● Bash(npx tsc --noEmit 2>&1 | head -30)
+  ⎿  (No output)
+
+● Bash(npx tsc --noEmit 2>&1 | head -30)
+  ⎿  (No output)
+
+● Bash(npx tsc --noEmit 2>&1 | head -20)
+  ⎿  (No output)
+
+● Bash(npx tsc --noEmit 2>&1 | head -30)
+  ⎿  (No output)
+
+● Bash(npx tsc --noEmit 2>&1 | head -30; echo "exit:$?")
+  ⎿  exit:
+
+● Bash(npx tsc --noEmit; echo "exit:$?")
+  ⎿  exit:0
+
+● TypeScript passes cleanly (exit 0). Let me also check if the dev server is
+  already running:
+
+● Bash(fuser 5173/tcp 2>/dev/null && echo "running" || echo "not running")
+  ⎿   53927running
+
+● Dev server is already running. The fix is live — Vite's hot module replacement
+   will pick it up automatically.
+
+  ---
+  Что было исправлено:
+
+  Проблема: Maximum update depth exceeded — бесконечный цикл ре-рендеров.
+
+  Причина: Два взаимосвязанных бага:
+
+  1. onSelectionChange с нестабильной зависимостью — callback был объявлен как
+  useCallback(fn, [store]), но store (весь стейт Zustand) получает новую ссылку
+  при каждом обновлении состояния. ReactFlow видит новую функцию → вызывает её →
+   обновляется Zustand → новый store → новый onSelectionChange → бесконечный
+  цикл.
+  2. setSelectedNodeIds всегда триггерил re-render — даже если выбор не
+  изменился, Zustand обновлял стейт, что давало ещё один оборот цикла.
+
+  Исправления:
+
+  - diagramStore.ts: setSelectedNodeIds теперь сравнивает новый массив со старым
+   и возвращает тот же объект стейта (return s) если изменений нет — Zustand
+  пропускает re-render.
+  - DiagramEditor.tsx: onSelectionChange теперь зависит только от
+  setSelectedNodeIds (стабильная ссылка на экшен Zustand, которая никогда не
+  меняется), а не от всего store. Callback остаётся стабильным между рендерами.
+
+✻ Cogitated for 3m 41s

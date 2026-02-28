@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  avatar        String?
+  oauthProvider String?   @map("oauth_provider")
+  oauthId       String?   @map("oauth_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  ownedTeams    Team[]    @relation("TeamOwner")
+  teamMembers   TeamMember[]
+  diagrams      Diagram[]
+  sharedWith    DiagramShare[]
+  macros        UserMacro[]
+
+  @@map("users")
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String   @map("owner_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  owner     User         @relation("TeamOwner", fields: [ownerId], references: [id])
+  members   TeamMember[]
+  diagrams  Diagram[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id     String @id @default(cuid())
+  teamId String @map("team_id")
+  userId String @map("user_id")
+  role   String @default("member") // owner | admin | member
+
+  team   Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+model Diagram {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  data        Json     @default("{\"nodes\":[],\"edges\":[]}")
+  thumbnail   String?
+  isPublic    Boolean  @default(false) @map("is_public")
+  createdById String   @map("created_by")
+  teamId      String?  @map("team_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  createdBy User           @relation(fields: [createdById], references: [id])
+  team      Team?          @relation(fields: [teamId], references: [id])
+  versions  DiagramVersion[]
+  shares    DiagramShare[]
+
+  @@map("diagrams")
+}
+
+model DiagramVersion {
+  id        String   @id @default(cuid())
+  diagramId String   @map("diagram_id")
+  data      Json
+  version   Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  diagram   Diagram  @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+
+  @@map("diagram_versions")
+}
+
+model DiagramShare {
+  id        String  @id @default(cuid())
+  diagramId String  @map("diagram_id")
+  userId    String  @map("user_id")
+  role      String  @default("viewer") // editor | viewer
+
+  diagram   Diagram @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([diagramId, userId])
+  @@map("diagram_shares")
+}
+
+model UserMacro {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  name      String
+  tags      String[] @default([])
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_macros")
+}
