@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { MessageSquare, Smile, Trash2, CheckCircle, Circle, Send } from "lucide-react";
+import { MessageSquare, Smile, Trash2, CheckCircle, Circle, Send, Mic } from "lucide-react";
+import { VoiceRecorderModal } from "./modals/VoiceRecorderModal";
 
 interface Comment {
   id: string;
@@ -43,6 +44,7 @@ export function CommentsPanel({ diagramId, currentUserId, onClose }: Props) {
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "open" | "resolved">("open");
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
 
   useEffect(() => {
     loadComments();
@@ -87,6 +89,29 @@ export function CommentsPanel({ diagramId, currentUserId, onClose }: Props) {
       }
     } catch (err) {
       console.error("Failed to add comment:", err);
+    }
+  };
+
+  const addVoiceComment = async (audioUrl: string) => {
+    try {
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          diagramId,
+          audioUrl,
+          type: "voice",
+          parentId: replyTo,
+        }),
+      });
+
+      if (res.ok) {
+        setReplyTo(null);
+        loadComments();
+      }
+    } catch (err) {
+      console.error("Failed to add voice comment:", err);
     }
   };
 
@@ -237,6 +262,13 @@ export function CommentsPanel({ diagramId, currentUserId, onClose }: Props) {
             className="flex-1 px-3 py-2 rounded-lg bg-[#0f1117] border border-[#2d3148] text-white text-sm placeholder-slate-500 focus:outline-none focus:border-indigo-500"
           />
           <button
+            onClick={() => setShowVoiceRecorder(true)}
+            className="px-3 py-2 rounded-lg bg-[#1e2130] border border-[#2d3148] text-slate-400 hover:text-white transition-colors"
+            title="Voice comment"
+          >
+            <Mic size={16} />
+          </button>
+          <button
             onClick={addComment}
             disabled={!newComment.trim()}
             className="px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -245,6 +277,17 @@ export function CommentsPanel({ diagramId, currentUserId, onClose }: Props) {
           </button>
         </div>
       </div>
+
+      {/* Voice recorder modal */}
+      {showVoiceRecorder && (
+        <VoiceRecorderModal
+          onUpload={(url) => {
+            addVoiceComment(url);
+            setShowVoiceRecorder(false);
+          }}
+          onClose={() => setShowVoiceRecorder(false)}
+        />
+      )}
     </div>
   );
 }
