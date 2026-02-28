@@ -17,11 +17,14 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  ownedTeams    Team[]    @relation("TeamOwner")
-  teamMembers   TeamMember[]
-  diagrams      Diagram[]
-  sharedWith    DiagramShare[]
-  macros        UserMacro[]
+  ownedTeams       Team[]    @relation("TeamOwner")
+  teamMembers      TeamMember[]
+  diagrams         Diagram[]
+  sharedWith       DiagramShare[]
+  macros           UserMacro[]
+  nodeTypes        NodeType[]
+  comments         Comment[]
+  commentReactions CommentReaction[]
 
   @@map("users")
 }
@@ -68,6 +71,7 @@ model Diagram {
   team      Team?          @relation(fields: [teamId], references: [id])
   versions  DiagramVersion[]
   shares    DiagramShare[]
+  comments  Comment[]
 
   @@map("diagrams")
 }
@@ -108,4 +112,57 @@ model UserMacro {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_macros")
+}
+
+model NodeType {
+  id          String   @id @default(cuid())
+  label       String
+  category    String
+  tech        String?
+  description String?
+  icon        String?
+  color       String?
+  createdById String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  @@map("node_types")
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  diagramId   String   @map("diagram_id")
+  authorId    String   @map("author_id")
+  content     String?
+  audioUrl    String?  @map("audio_url")
+  type        String
+  nodeId      String?  @map("node_id")
+  posX        Float?   @map("pos_x")
+  posY        Float?   @map("pos_y")
+  parentId    String?  @map("parent_id")
+  resolved    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  diagram     Diagram  @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+  author      User     @relation(fields: [authorId], references: [id])
+  parent      Comment? @relation("CommentThread", fields: [parentId], references: [id])
+  replies     Comment[] @relation("CommentThread")
+  reactions   CommentReaction[]
+
+  @@map("comments")
+}
+
+model CommentReaction {
+  id         String   @id @default(cuid())
+  commentId  String   @map("comment_id")
+  userId     String   @map("user_id")
+  emoji      String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  comment    Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId, emoji])
+  @@map("comment_reactions")
 }
