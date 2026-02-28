@@ -6,7 +6,7 @@ import { requireAuth } from "../middleware/auth";
 const createCommentSchema = z.object({
   diagramId: z.string(),
   content: z.string().optional(),
-  audioUrl: z.string().url().optional().or(z.literal("")).transform(val => val || undefined),
+  audioUrl: z.string().min(1).optional().or(z.literal("")).transform(val => val || undefined),
   type: z.enum(["text", "voice", "node", "position", "global"]),
   nodeId: z.string().optional(),
   posX: z.number().optional(),
