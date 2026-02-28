@@ -41,20 +41,24 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
 
   return (
     <div
-      className="relative min-w-[150px] h-full rounded-xl border-2 transition-all duration-200 cursor-default select-none"
-      style={{
-        borderColor: isHighlighted ? "#818cf8" : selected ? "#818cf8" : color,
-        background: bg,
-        opacity: isDimmed ? 0.25 : 1,
-        boxShadow: isHighlighted
-          ? `0 0 0 2px #818cf840, 0 0 20px ${color}30`
-          : selected
-          ? `0 0 0 2px #818cf840`
-          : "none",
-      }}
+      className="relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      style={{ padding: "12px" }}
     >
+      <div
+        className="relative min-w-[150px] h-full rounded-xl border-2 transition-all duration-200 cursor-default select-none"
+        style={{
+          borderColor: isHighlighted ? "#818cf8" : selected ? "#818cf8" : color,
+          background: bg,
+          opacity: isDimmed ? 0.25 : 1,
+          boxShadow: isHighlighted
+            ? `0 0 0 2px #818cf840, 0 0 20px ${color}30`
+            : selected
+            ? `0 0 0 2px #818cf840`
+            : "none",
+        }}
+      >
       <NodeResizer
         minWidth={140}
         minHeight={60}
@@ -122,6 +126,7 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
           {openComments.length}
         </div>
       )}
+      </div>
 
       {/* Quick add buttons on hover */}
       {isHovered && data.onQuickAdd && (
@@ -132,7 +137,7 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
               e.stopPropagation();
               data.onQuickAdd?.(id, "top");
             }}
-            className="absolute -top-8 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
             title="Add connected node above"
           >
             <Plus size={14} />
@@ -144,7 +149,7 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
               e.stopPropagation();
               data.onQuickAdd?.(id, "left");
             }}
-            className="absolute top-1/2 -translate-y-1/2 -left-8 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            className="absolute top-1/2 -translate-y-1/2 -left-2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
             title="Add connected node to the left"
           >
             <Plus size={14} />
@@ -156,7 +161,7 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
               e.stopPropagation();
               data.onQuickAdd?.(id, "bottom");
             }}
-            className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
             title="Add connected node below"
           >
             <Plus size={14} />
@@ -168,7 +173,7 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
               e.stopPropagation();
               data.onQuickAdd?.(id, "right");
             }}
-            className="absolute top-1/2 -translate-y-1/2 -right-8 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            className="absolute top-1/2 -translate-y-1/2 -right-2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
             title="Add connected node to the right"
           >
             <Plus size={14} />
