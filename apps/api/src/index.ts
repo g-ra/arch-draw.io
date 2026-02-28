@@ -8,6 +8,7 @@ import { diagramRoutes } from "./routes/diagrams";
 import { wsRoutes } from "./routes/ws";
 import { macroRoutes } from "./routes/macros";
 import { nodeTypeRoutes } from "./routes/nodeTypes";
+import { commentRoutes } from "./routes/comments";
 
 const app = Fastify({ logger: true });
 
@@ -34,6 +35,7 @@ async function bootstrap() {
   await app.register(diagramRoutes, { prefix: "/api/diagrams" });
   await app.register(macroRoutes, { prefix: "/api/macros" });
   await app.register(nodeTypeRoutes, { prefix: "/api/node-types" });
+  await app.register(commentRoutes, { prefix: "/api/comments" });
   await app.register(wsRoutes, { prefix: "/ws" });
 
   app.get("/health", async () => ({ status: "ok" }));
