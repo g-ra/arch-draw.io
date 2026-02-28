@@ -125,8 +125,9 @@ model NodeType {
   createdById String   @map("created_by")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
+  @@index([createdById])
   @@map("node_types")
 }
 
@@ -145,11 +146,14 @@ model Comment {
   createdAt   DateTime @default(now()) @map("created_at")
 
   diagram     Diagram  @relation(fields: [diagramId], references: [id], onDelete: Cascade)
-  author      User     @relation(fields: [authorId], references: [id])
-  parent      Comment? @relation("CommentThread", fields: [parentId], references: [id])
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent      Comment? @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
   replies     Comment[] @relation("CommentThread")
   reactions   CommentReaction[]
 
+  @@index([diagramId])
+  @@index([authorId])
+  @@index([parentId])
   @@map("comments")
 }
 
