@@ -251,7 +251,7 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
   // Send versioned update to other clients (immediate, no throttle)
   const sendUpdateImmediate = useCallback(() => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.log("[WS] Cannot send: socket not open");
+      console.log("[WS] Cannot send: socket not open, readyState:", wsRef.current?.readyState);
       return;
     }
 
@@ -274,7 +274,7 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
       },
     };
 
-    console.log(`[WS] Sending version ${versionRef.current}`);
+    console.log(`[WS] Sending version ${versionRef.current}, nodes count:`, state.nodes.length);
     try {
       wsRef.current.send(JSON.stringify(message));
     } catch (err) {
@@ -313,18 +313,24 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
 
   // Wrapper for onNodesChange that sends WS update
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
+    console.log("[Sync] handleNodesChange called with changes:", changes);
     store.onNodesChange(changes);
     if (!isApplyingRemoteChangeRef.current) {
+      console.log("[Sync] Not applying remote change, will send update");
       if (!wsConnected) {
         offlineChangesRef.current = true;
       }
       // Check if any change is a remove operation
       const hasDelete = changes.some(c => c.type === 'remove');
       if (hasDelete) {
+        console.log("[Sync] Has delete, sending immediate");
         sendUpdateImmediate(); // Immediate sync for deletes
       } else {
+        console.log("[Sync] No delete, sending throttled");
         sendUpdate(); // Throttled sync for other changes
       }
+    } else {
+      console.log("[Sync] Applying remote change, skipping send");
     }
   }, [sendUpdate, sendUpdateImmediate, wsConnected]);
 
