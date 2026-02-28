@@ -30,6 +30,7 @@ import { useExport } from "../hooks/useExport";
 import {
   ArrowLeft, Save, Wifi, WifiOff, Eye, EyeOff,
   Download, ChevronDown, MousePointer2, StickyNote, Type, MessageSquare, LayoutGrid, Users,
+  Trash2, ZoomIn, ZoomOut, Maximize2,
 } from "lucide-react";
 import { TechNodeData, FlowEdgeData, StickyNoteData, TextAnnotationData, EditorTool } from "../types/diagram";
 
@@ -658,6 +659,54 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
             >
               <LayoutGrid size={14} /> Auto Layout
             </button>
+
+            {/* Delete button */}
+            {(store.selectedNodeId || store.selectedEdgeId || store.selectedNodeIds.length > 0) && (
+              <button
+                onClick={() => {
+                  if (store.selectedNodeIds.length > 0) {
+                    store.selectedNodeIds.forEach(id => store.deleteNode(id));
+                    store.setSelectedNodeIds([]);
+                  } else if (store.selectedNodeId) {
+                    store.deleteNode(store.selectedNodeId);
+                    store.setSelectedNodeId(null);
+                  } else if (store.selectedEdgeId) {
+                    store.deleteEdge(store.selectedEdgeId);
+                    store.setSelectedEdgeId(null);
+                  }
+                  sendUpdateImmediate();
+                }}
+                title="Delete (Del)"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-sm border border-red-500/20 hover:bg-red-500/20 transition-colors"
+              >
+                <Trash2 size={14} /> Delete
+              </button>
+            )}
+
+            {/* Zoom controls */}
+            <div className="flex items-center gap-0.5 border border-[#2d3148] rounded-lg overflow-hidden">
+              <button
+                onClick={() => rfInstance?.zoomIn()}
+                title="Zoom In"
+                className="px-2 py-1.5 bg-[#1e2130] text-slate-400 hover:text-white hover:bg-[#252836] transition-colors"
+              >
+                <ZoomIn size={14} />
+              </button>
+              <button
+                onClick={() => rfInstance?.zoomOut()}
+                title="Zoom Out"
+                className="px-2 py-1.5 bg-[#1e2130] text-slate-400 hover:text-white hover:bg-[#252836] transition-colors border-l border-[#2d3148]"
+              >
+                <ZoomOut size={14} />
+              </button>
+              <button
+                onClick={() => rfInstance?.fitView({ padding: 0.2 })}
+                title="Fit View"
+                className="px-2 py-1.5 bg-[#1e2130] text-slate-400 hover:text-white hover:bg-[#252836] transition-colors border-l border-[#2d3148]"
+              >
+                <Maximize2 size={14} />
+              </button>
+            </div>
           </>
         )}
 
@@ -794,7 +843,6 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
             connectionMode={ConnectionMode.Loose}
           >
             <Background variant={BackgroundVariant.Dots} gap={24} color="#2d3148" size={1} />
-            <Controls />
             <MiniMap
               nodeColor={(n) => {
                 const d = n.data as TechNodeData;
