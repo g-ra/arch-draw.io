@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { CATEGORIES, REGION_TEMPLATES, NodeTemplate } from "../lib/nodeLibrary";
 import { NodeCategory, MacroDefinition } from "../types/diagram";
 import { NODE_ICONS } from "../lib/nodeIcons";
-import { Search, Plus, Map, Blocks, Trash2, Upload } from "lucide-react";
+import { Search, Plus, Map, Blocks, Trash2, Upload, ArrowLeft } from "lucide-react";
 import { useDiagramStore } from "../stores/diagramStore";
 import { ReactFlowInstance } from "reactflow";
 import { AddNodeTypeModal } from "./modals/AddNodeTypeModal";
@@ -11,11 +11,15 @@ interface Props {
   onDragStart: (e: React.DragEvent, template: NodeTemplate) => void;
   onCreateCustom: () => void;
   rfInstance: ReactFlowInstance | null;
+  diagramName: string;
+  onDiagramNameChange: (name: string) => void;
+  viewMode: boolean;
+  onBack: () => void;
 }
 
 type PanelTab = "nodes" | "snippets" | "projects";
 
-export function NodePanel({ onDragStart, onCreateCustom, rfInstance }: Props) {
+export function NodePanel({ onDragStart, onCreateCustom, rfInstance, diagramName, onDiagramNameChange, viewMode, onBack }: Props) {
   const [activeTab, setActiveTab] = useState<PanelTab>("nodes");
   const [activeCategory, setActiveCategory] = useState<NodeCategory | "all" | "regions">("all");
   const [search, setSearch] = useState("");
@@ -116,6 +120,20 @@ export function NodePanel({ onDragStart, onCreateCustom, rfInstance }: Props) {
 
   return (
     <div className="w-56 flex-shrink-0 border-r border-[#2d3148] bg-[#13151f] flex flex-col h-full">
+      {/* Header */}
+      <div className="h-12 border-b border-[#2d3148] flex items-center px-3 gap-2 flex-shrink-0">
+        <button onClick={onBack} className="text-slate-400 hover:text-white transition-colors p-1">
+          <ArrowLeft size={18} />
+        </button>
+
+        <input
+          value={diagramName}
+          onChange={(e) => onDiagramNameChange(e.target.value)}
+          disabled={viewMode}
+          className="bg-transparent text-white font-medium text-sm focus:outline-none border-b border-transparent focus:border-indigo-500 px-1 py-0.5 flex-1 disabled:opacity-70"
+        />
+      </div>
+
       {/* Tab bar */}
       <div className="flex border-b border-[#2d3148]">
         <button

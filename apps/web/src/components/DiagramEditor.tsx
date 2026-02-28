@@ -648,32 +648,22 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#0f1117]">
-      {/* Toolbar */}
-      <div className="h-12 border-b border-[#2d3148] flex items-center px-3 gap-2 flex-shrink-0">
-        <button onClick={onBack} className="text-slate-400 hover:text-white transition-colors p-1">
-          <ArrowLeft size={18} />
-        </button>
-
-        <input
-          value={store.diagramName}
-          onChange={(e) => store.setDiagramName(e.target.value)}
-          disabled={store.viewMode}
-          className="bg-transparent text-white font-medium text-sm focus:outline-none border-b border-transparent focus:border-indigo-500 px-1 py-0.5 w-44 disabled:opacity-70"
+    <div className="h-screen flex bg-[#0f1117]">
+      {/* Left panel */}
+      {!store.viewMode && (
+        <NodePanel
+          onDragStart={onDragStart}
+          onCreateCustom={() => setShowCustomNodeModal(true)}
+          rfInstance={rfInstance}
+          diagramName={store.diagramName}
+          onDiagramNameChange={(name) => store.setDiagramName(name)}
+          viewMode={store.viewMode}
+          onBack={onBack}
         />
-      </div>
+      )}
 
-      {/* Body */}
+      {/* Main area: Canvas + Right panels */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left panel */}
-        {!store.viewMode && (
-          <NodePanel
-            onDragStart={onDragStart}
-            onCreateCustom={() => setShowCustomNodeModal(true)}
-            rfInstance={rfInstance}
-          />
-        )}
-
         {/* Canvas */}
         <div className="flex-1 relative" style={cursorStyle} onDrop={onDrop} onDragOver={onDragOver}>
           <ReactFlow
