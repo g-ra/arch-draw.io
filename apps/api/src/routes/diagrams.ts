@@ -128,4 +128,51 @@ export async function diagramRoutes(app: FastifyInstance) {
       take: 50,
     });
   });
+
+  // Get all diagrams with filtering
+  app.get("/all", async (req, reply) => {
+    const { author, name, limit = "50", offset = "0" } = req.query as {
+      author?: string;
+      name?: string;
+      limit?: string;
+      offset?: string;
+    };
+
+    const limitNum = Math.min(parseInt(limit, 10) || 50, 100);
+    const offsetNum = parseInt(offset, 10) || 0;
+
+    const where: any = {};
+
+    if (author) {
+      where.createdBy = {
+        name: { contains: author, mode: "insensitive" },
+      };
+    }
+
+    if (name) {
+      where.name = { contains: name, mode: "insensitive" };
+    }
+
+    const [items, total] = await Promise.all([
+      prisma.diagram.findMany({
+        where,
+        orderBy: { updatedAt: "desc" },
+        skip: offsetNum,
+        take: limitNum,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          thumbnail: true,
+          updatedAt: true,
+          createdBy: {
+            select: { id: true, name: true, avatar: true },
+          },
+        },
+      }),
+      prisma.diagram.count({ where }),
+    ]);
+
+    return { items, total };
+  });
 }
