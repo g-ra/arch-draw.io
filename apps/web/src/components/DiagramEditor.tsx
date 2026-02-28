@@ -31,7 +31,7 @@ import { useExport } from "../hooks/useExport";
 import {
   ArrowLeft, Save, Wifi, WifiOff, Eye, EyeOff,
   Download, ChevronDown, MousePointer2, StickyNote, Type, MessageSquare, LayoutGrid, Users,
-  Trash2, ZoomIn, ZoomOut, Maximize2,
+  Trash2, ZoomIn, ZoomOut, Maximize2, Plus,
 } from "lucide-react";
 import { TechNodeData, FlowEdgeData, StickyNoteData, TextAnnotationData, EditorTool } from "../types/diagram";
 
@@ -892,6 +892,29 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
             {!store.viewMode && multiCount >= 2 && (
               <Panel position="top-center">
                 <AlignmentToolbar count={multiCount} onSaveMacro={() => setShowSaveMacroModal(true)} />
+              </Panel>
+            )}
+
+            {/* Floating Add button */}
+            {!store.viewMode && (
+              <Panel position="bottom-right">
+                <button
+                  onClick={() => {
+                    const center = rfInstance?.getViewport();
+                    const pos = center ? rfInstance.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }) : { x: 200, y: 200 };
+                    store.addNode({
+                      id: crypto.randomUUID(),
+                      type: "techNode",
+                      position: pos,
+                      data: { label: "Microservice", category: "backend", tech: "service" },
+                    });
+                    sendUpdateImmediate();
+                  }}
+                  className="w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center"
+                  title="Add Node (default: Microservice)"
+                >
+                  <Plus size={24} />
+                </button>
               </Panel>
             )}
 
