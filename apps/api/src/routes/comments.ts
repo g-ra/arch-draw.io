@@ -6,12 +6,12 @@ import { requireAuth } from "../middleware/auth";
 const createCommentSchema = z.object({
   diagramId: z.string(),
   content: z.string().optional(),
-  audioUrl: z.string().url().optional(),
-  type: z.enum(["text", "voice"]),
+  audioUrl: z.string().url().optional().or(z.literal("")).transform(val => val || undefined),
+  type: z.enum(["text", "voice", "node", "position", "global"]),
   nodeId: z.string().optional(),
   posX: z.number().optional(),
   posY: z.number().optional(),
-  parentId: z.string().optional(),
+  parentId: z.string().nullable().optional(),
 }).refine(
   (data) => data.content || data.audioUrl,
   { message: "Either content or audioUrl must be provided" }
