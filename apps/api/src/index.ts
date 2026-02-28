@@ -3,12 +3,16 @@ import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import cookie from "@fastify/cookie";
 import websocket from "@fastify/websocket";
+import multipart from "@fastify/multipart";
+import fastifyStatic from "@fastify/static";
+import path from "path";
 import { authRoutes } from "./routes/auth";
 import { diagramRoutes } from "./routes/diagrams";
 import { wsRoutes } from "./routes/ws";
 import { macroRoutes } from "./routes/macros";
 import { nodeTypeRoutes } from "./routes/nodeTypes";
 import { commentRoutes } from "./routes/comments";
+import { uploadRoutes } from "./routes/upload";
 
 const app = Fastify({ logger: true });
 
@@ -30,12 +34,26 @@ async function bootstrap() {
 
   await app.register(websocket);
 
+  // File upload support
+  await app.register(multipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB
+    },
+  });
+
+  // Serve uploaded files
+  await app.register(fastifyStatic, {
+    root: path.join(process.cwd(), "uploads"),
+    prefix: "/uploads/",
+  });
+
   // Routes
   await app.register(authRoutes, { prefix: "/api/auth" });
   await app.register(diagramRoutes, { prefix: "/api/diagrams" });
   await app.register(macroRoutes, { prefix: "/api/macros" });
   await app.register(nodeTypeRoutes, { prefix: "/api/node-types" });
   await app.register(commentRoutes, { prefix: "/api/comments" });
+  await app.register(uploadRoutes, { prefix: "/api/upload" });
   await app.register(wsRoutes, { prefix: "/ws" });
 
   app.get("/health", async () => ({ status: "ok" }));
