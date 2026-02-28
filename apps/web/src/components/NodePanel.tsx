@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NODE_LIBRARY, CATEGORIES, REGION_TEMPLATES, NodeTemplate } from "../lib/nodeLibrary";
+import { CATEGORIES, REGION_TEMPLATES, NodeTemplate } from "../lib/nodeLibrary";
 import { NodeCategory, MacroDefinition } from "../types/diagram";
 import { NODE_ICONS } from "../lib/nodeIcons";
 import { Search, Plus, Map, Blocks, Trash2, Upload } from "lucide-react";
@@ -18,10 +18,14 @@ export function NodePanel({ onDragStart, onCreateCustom, rfInstance }: Props) {
   const [activeTab, setActiveTab] = useState<PanelTab>("nodes");
   const [activeCategory, setActiveCategory] = useState<NodeCategory | "all" | "regions">("all");
   const [search, setSearch] = useState("");
-  const { customTemplates, macros, deleteMacro, insertMacro } = useDiagramStore();
+  const { customTemplates, nodeTypes, loadNodeTypes, macros, deleteMacro, insertMacro } = useDiagramStore();
   const [libraryMacros, setLibraryMacros] = useState<(MacroDefinition & { libraryId: string })[]>([]);
   const [libraryError, setLibraryError] = useState(false);
   const [libraryLoading, setLibraryLoading] = useState(false);
+
+  useEffect(() => {
+    loadNodeTypes();
+  }, [loadNodeTypes]);
 
   useEffect(() => {
     if (activeTab !== "snippets") return;
@@ -79,7 +83,7 @@ export function NodePanel({ onDragStart, onCreateCustom, rfInstance }: Props) {
     insertMacro(macro, pos);
   };
 
-  const allTemplates = [...NODE_LIBRARY, ...customTemplates];
+  const allTemplates = [...nodeTypes, ...customTemplates];
   const filtered = allTemplates.filter((n) => {
     if (activeCategory === "regions") return false;
     const matchCat = activeCategory === "all" || n.category === activeCategory;

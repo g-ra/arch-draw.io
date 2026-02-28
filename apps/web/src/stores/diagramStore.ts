@@ -6,7 +6,19 @@ import {
   NodeChange, EdgeChange, Connection, addEdge,
 } from "reactflow";
 import { NodeTemplate } from "../lib/nodeLibrary";
-import { EditorTool, MacroDefinition } from "../types/diagram";
+import { EditorTool, MacroDefinition, NodeCategory } from "../types/diagram";
+
+interface NodeType {
+  id: string;
+  label: string;
+  category: NodeCategory;
+  tech?: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  createdBy: { id: string; name: string; avatar?: string };
+  createdAt: string;
+}
 
 interface DiagramStore {
   nodes: Node[];
@@ -26,6 +38,7 @@ interface DiagramStore {
   highlightedEdgeIds: Set<string>;
 
   customTemplates: NodeTemplate[];
+  nodeTypes: NodeType[];
 
   // Actions
   setDiagramId: (id: string | null) => void;
@@ -49,6 +62,8 @@ interface DiagramStore {
   highlightPath: (nodeId: string) => void;
   clearHighlight: () => void;
   addCustomTemplate: (t: NodeTemplate) => void;
+  loadNodeTypes: () => Promise<void>;
+  addNodeType: (nodeType: NodeType) => void;
   deleteNode: (nodeId: string) => void;
   deleteEdge: (edgeId: string) => void;
   setNodeZIndex: (nodeId: string, zIndex: number) => void;
@@ -82,6 +97,7 @@ export const useDiagramStore = create<DiagramStore>((set, get) => ({
   highlightedNodeIds: new Set(),
   highlightedEdgeIds: new Set(),
   customTemplates: [],
+  nodeTypes: [],
   macros: [],
 
   setDiagramId: (id) => set({ diagramId: id }),
@@ -174,6 +190,20 @@ export const useDiagramStore = create<DiagramStore>((set, get) => ({
   clearHighlight: () => set({ highlightedNodeIds: new Set(), highlightedEdgeIds: new Set() }),
 
   addCustomTemplate: (t) => set((s) => ({ customTemplates: [...s.customTemplates, t] })),
+
+  loadNodeTypes: async () => {
+    const res = await fetch("/api/node-types");
+    if (res.ok) {
+      const types = await res.json();
+      set({ nodeTypes: types });
+    }
+  },
+
+  addNodeType: (nodeType) => {
+    set((state) => ({
+      nodeTypes: [...state.nodeTypes, nodeType],
+    }));
+  },
 
   deleteNode: (nodeId) =>
     set((s) => ({
