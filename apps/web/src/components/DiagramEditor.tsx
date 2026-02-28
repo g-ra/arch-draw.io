@@ -107,8 +107,6 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
 
   // Load diagram
   useEffect(() => {
-    if (!diagramId) { store.loadDiagram({ nodes: [], edges: [] }); return; }
-
     // Check if user is authenticated
     fetch("/api/auth/me", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
@@ -116,10 +114,19 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
         // If not authenticated and no guest name - show modal
         if (!authUser && !localStorage.getItem("tf_author")) {
           setShowGuestNameModal(true);
+          // Still load empty diagram if no diagramId
+          if (!diagramId) {
+            store.loadDiagram({ nodes: [], edges: [] });
+          }
           return;
         }
 
-        // Load diagram
+        // Load diagram if diagramId exists
+        if (!diagramId) {
+          store.loadDiagram({ nodes: [], edges: [] });
+          return;
+        }
+
         return fetch(`/api/diagrams/${diagramId}`, { credentials: "include" })
           .then((r) => r.ok ? r.json() : Promise.reject(r.status))
           .then((d) => {
@@ -129,7 +136,9 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
           });
       })
       .catch(() => {
-        store.setDiagramName("Failed to load");
+        if (diagramId) {
+          store.setDiagramName("Failed to load");
+        }
       });
   }, [diagramId]);
 
