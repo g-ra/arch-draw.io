@@ -363,20 +363,40 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
   }, [store.nodes, store.edges, store.isDirty]);
 
   const save = async () => {
-    if (!diagramId || saving) return;
+    if (saving) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/diagrams/${diagramId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          name: store.diagramName,
-          data: { nodes: store.nodes, edges: store.edges, macros: store.macros },
-        }),
-      });
-      if (res.ok) {
-        store.markSaved();
+      if (!diagramId) {
+        // Create new diagram
+        const res = await fetch("/api/diagrams", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            name: store.diagramName || "Untitled Diagram",
+            data: { nodes: store.nodes, edges: store.edges, macros: store.macros },
+          }),
+        });
+        if (res.ok) {
+          const newDiagram = await res.json();
+          // Update URL to include diagram ID
+          window.history.replaceState({}, "", `/editor/${newDiagram.id}`);
+          store.markSaved();
+        }
+      } else {
+        // Update existing diagram
+        const res = await fetch(`/api/diagrams/${diagramId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            name: store.diagramName,
+            data: { nodes: store.nodes, edges: store.edges, macros: store.macros },
+          }),
+        });
+        if (res.ok) {
+          store.markSaved();
+        }
       }
     } catch {
       // Network error — keep isDirty so autosave retries
