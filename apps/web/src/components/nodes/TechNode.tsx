@@ -132,7 +132,7 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
               e.stopPropagation();
               data.onQuickAdd?.(id, "top");
             }}
-            className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            className="absolute -top-8 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
             title="Add connected node above"
           >
             <Plus size={14} />
@@ -144,7 +144,7 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
               e.stopPropagation();
               data.onQuickAdd?.(id, "left");
             }}
-            className="absolute top-1/2 -translate-y-1/2 -left-3 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            className="absolute top-1/2 -translate-y-1/2 -left-8 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
             title="Add connected node to the left"
           >
             <Plus size={14} />
@@ -156,7 +156,7 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
               e.stopPropagation();
               data.onQuickAdd?.(id, "bottom");
             }}
-            className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
             title="Add connected node below"
           >
             <Plus size={14} />
@@ -168,7 +168,7 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
               e.stopPropagation();
               data.onQuickAdd?.(id, "right");
             }}
-            className="absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            className="absolute top-1/2 -translate-y-1/2 -right-8 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
             title="Add connected node to the right"
           >
             <Plus size={14} />
