@@ -17,7 +17,7 @@ import { EdgePropertiesPanel } from "./panels/EdgePropertiesPanel";
 import { NodePropertiesPanel } from "./panels/NodePropertiesPanel";
 import { StickyNotePanel } from "./panels/StickyNotePanel";
 import { TextAnnotationPanel } from "./panels/TextAnnotationPanel";
-import { AlignmentToolbar } from "./AlignmentToolbar";
+import { ContextualToolbar } from "./ContextualToolbar";
 import { CustomNodeModal } from "./modals/CustomNodeModal";
 import { SaveMacroModal } from "./modals/SaveMacroModal";
 import { ShareModal } from "./modals/ShareModal";
@@ -661,192 +661,6 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
           disabled={store.viewMode}
           className="bg-transparent text-white font-medium text-sm focus:outline-none border-b border-transparent focus:border-indigo-500 px-1 py-0.5 w-44 disabled:opacity-70"
         />
-
-        {/* Tool palette */}
-        {!store.viewMode && (
-          <>
-            <div className="w-px h-5 bg-[#2d3148] mx-1" />
-            <div className="flex items-center gap-0.5">
-              {TOOLS.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => store.setTool(t.id)}
-                  title={t.label}
-                  className="p-1.5 rounded-lg transition-all"
-                  style={
-                    store.tool === t.id
-                      ? { background: "#4f46e530", color: "#818cf8", outline: "1px solid #4f46e544" }
-                      : { color: "#64748b" }
-                  }
-                >
-                  {t.icon}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-
-        {!store.viewMode && (
-          <>
-            <div className="w-px h-5 bg-[#2d3148] mx-1" />
-            <button
-              onClick={handleAutoLayout}
-              title="Auto Layout (Dagre LR)"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#1e2130] text-slate-400 text-sm border border-[#2d3148] hover:text-white transition-colors"
-            >
-              <LayoutGrid size={14} /> Auto Layout
-            </button>
-
-            {/* Delete button */}
-            {(store.selectedNodeId || store.selectedEdgeId || store.selectedNodeIds.length > 0) && (
-              <button
-                onClick={() => {
-                  if (store.selectedNodeIds.length > 0) {
-                    store.selectedNodeIds.forEach(id => store.deleteNode(id));
-                    store.setSelectedNodeIds([]);
-                  } else if (store.selectedNodeId) {
-                    store.deleteNode(store.selectedNodeId);
-                    store.setSelectedNodeId(null);
-                  } else if (store.selectedEdgeId) {
-                    store.deleteEdge(store.selectedEdgeId);
-                    store.setSelectedEdgeId(null);
-                  }
-                  sendUpdateImmediate();
-                }}
-                title="Delete (Del)"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-sm border border-red-500/20 hover:bg-red-500/20 transition-colors"
-              >
-                <Trash2 size={14} /> Delete
-              </button>
-            )}
-
-            {/* Zoom controls */}
-            <div className="flex items-center gap-0.5 border border-[#2d3148] rounded-lg overflow-hidden">
-              <button
-                onClick={() => rfInstance?.zoomIn()}
-                title="Zoom In"
-                className="px-2 py-1.5 bg-[#1e2130] text-slate-400 hover:text-white hover:bg-[#252836] transition-colors"
-              >
-                <ZoomIn size={14} />
-              </button>
-              <button
-                onClick={() => rfInstance?.zoomOut()}
-                title="Zoom Out"
-                className="px-2 py-1.5 bg-[#1e2130] text-slate-400 hover:text-white hover:bg-[#252836] transition-colors border-l border-[#2d3148]"
-              >
-                <ZoomOut size={14} />
-              </button>
-              <button
-                onClick={() => rfInstance?.fitView({ padding: 0.2 })}
-                title="Fit View"
-                className="px-2 py-1.5 bg-[#1e2130] text-slate-400 hover:text-white hover:bg-[#252836] transition-colors border-l border-[#2d3148]"
-              >
-                <Maximize2 size={14} />
-              </button>
-            </div>
-          </>
-        )}
-
-        <div className="flex-1" />
-
-        {/* Tool hint */}
-        {!store.viewMode && store.tool !== "select" && (
-          <span className="text-xs text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded-lg border border-indigo-500/20">
-            {store.tool === "sticky" ? "Click canvas to place sticky note" :
-             store.tool === "text"   ? "Click canvas to place text" :
-             store.tool === "comment"? "Click canvas or node to add comment" : ""}
-          </span>
-        )}
-
-        {/* View mode */}
-        {store.viewMode && (
-          <div className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
-            <Eye size={12} /> View mode — click nodes to trace paths
-          </div>
-        )}
-
-        {/* WS status */}
-        {wsConnected
-          ? <span className="flex items-center gap-1 text-xs text-green-400"><Wifi size={12} /> Live</span>
-          : <span className="flex items-center gap-1 text-xs text-slate-500"><WifiOff size={12} /></span>
-        }
-        {store.isDirty && !store.viewMode && <span className="text-xs text-slate-500">Unsaved</span>}
-
-        {/* View/Edit toggle */}
-        <button
-          onClick={() => store.setViewMode(!store.viewMode)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors"
-          style={
-            store.viewMode
-              ? { background: "#f59e0b20", color: "#fbbf24", border: "1px solid #f59e0b33" }
-              : { background: "#1e2130", color: "#94a3b8", border: "1px solid #2d3148" }
-          }
-        >
-          {store.viewMode ? <><Eye size={14} /> View</> : <><EyeOff size={14} /> Edit</>}
-        </button>
-
-        {/* Export */}
-        <div className="relative">
-          <button
-            onClick={() => setShowExportMenu(!showExportMenu)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1e2130] text-slate-300 text-sm border border-[#2d3148] hover:text-white transition-colors"
-          >
-            <Download size={14} /> Export <ChevronDown size={12} />
-          </button>
-          {showExportMenu && (
-            <div
-              className="absolute right-0 top-10 bg-[#1a1d2e] border border-[#2d3148] rounded-xl shadow-xl overflow-hidden z-50 min-w-[150px]"
-              onMouseLeave={() => setShowExportMenu(false)}
-            >
-              {[
-                { label: "PNG image",   action: exportPng },
-                { label: "SVG image",   action: exportSvg },
-                { label: "JSON",        action: () => exportJson(store.nodes, store.edges) },
-                { label: "Mermaid .md", action: () => exportMermaid(store.nodes as Node<TechNodeData>[], store.edges as Edge<FlowEdgeData>[]) },
-                { label: "draw.io XML", action: () => exportDrawio(store.nodes as Node<TechNodeData>[], store.edges as Edge<FlowEdgeData>[]) },
-              ].map(({ label, action }) => (
-                <button
-                  key={label}
-                  onClick={() => { action(); setShowExportMenu(false); }}
-                  className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-[#2d3148] hover:text-white transition-colors"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Share */}
-        {diagramId && (
-          <button
-            onClick={() => setShowShareModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1e2130] text-slate-300 text-sm border border-[#2d3148] hover:text-white transition-colors"
-          >
-            <Users size={14} /> Share
-          </button>
-        )}
-
-        {/* Comments */}
-        {diagramId && (
-          <button
-            onClick={() => setShowCommentsPanel(!showCommentsPanel)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1e2130] text-slate-300 text-sm border border-[#2d3148] hover:text-white transition-colors"
-          >
-            <MessageSquare size={14} /> Comments
-          </button>
-        )}
-
-        {/* Save */}
-        {!store.viewMode && (
-          <button
-            onClick={save}
-            disabled={saving}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-500 disabled:opacity-50 transition-colors"
-          >
-            <Save size={14} /> {saving ? "Saving..." : "Save"}
-          </button>
-        )}
       </div>
 
       {/* Body */}
@@ -903,12 +717,50 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
               maskColor="#0f111788"
             />
 
-            {/* Alignment toolbar — floating above canvas when multi-selected */}
-            {!store.viewMode && multiCount >= 2 && (
-              <Panel position="top-center">
-                <AlignmentToolbar count={multiCount} onSaveMacro={() => setShowSaveMacroModal(true)} />
-              </Panel>
-            )}
+            {/* Contextual toolbar — changes based on selection */}
+            <Panel position="top-center">
+              <ContextualToolbar
+                multiCount={multiCount}
+                hasSelection={!!(store.selectedNodeId || store.selectedEdgeId || store.selectedNodeIds.length > 0)}
+                diagramId={diagramId}
+                diagramName={store.diagramName}
+                isDirty={store.isDirty}
+                saving={saving}
+                viewMode={store.viewMode}
+                tool={store.tool}
+                wsConnected={wsConnected}
+                rfInstance={rfInstance}
+                onSave={save}
+                onExport={(type) => {
+                  if (type === "png") exportPng();
+                  else if (type === "svg") exportSvg();
+                  else if (type === "json") exportJson(store.nodes, store.edges);
+                  else if (type === "mermaid") exportMermaid(store.nodes as Node<TechNodeData>[], store.edges as Edge<FlowEdgeData>[]);
+                  else if (type === "drawio") exportDrawio(store.nodes as Node<TechNodeData>[], store.edges as Edge<FlowEdgeData>[]);
+                }}
+                onShare={() => setShowShareModal(true)}
+                onComments={() => setShowCommentsPanel(!showCommentsPanel)}
+                onViewModeToggle={() => store.setViewMode(!store.viewMode)}
+                onToolChange={(tool) => store.setTool(tool as EditorTool)}
+                onAutoLayout={handleAutoLayout}
+                onDelete={() => {
+                  if (store.selectedNodeIds.length > 0) {
+                    store.selectedNodeIds.forEach(id => store.deleteNode(id));
+                    store.setSelectedNodeIds([]);
+                  } else if (store.selectedNodeId) {
+                    store.deleteNode(store.selectedNodeId);
+                    store.setSelectedNodeId(null);
+                  } else if (store.selectedEdgeId) {
+                    store.deleteEdge(store.selectedEdgeId);
+                    store.setSelectedEdgeId(null);
+                  }
+                  sendUpdateImmediate();
+                }}
+                onSaveMacro={() => setShowSaveMacroModal(true)}
+                showExportMenu={showExportMenu}
+                setShowExportMenu={setShowExportMenu}
+              />
+            </Panel>
 
             {/* Floating Add button */}
             {!store.viewMode && (
@@ -916,7 +768,7 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
                 <button
                   onClick={() => {
                     const center = rfInstance?.getViewport();
-                    const pos = center ? rfInstance.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }) : { x: 200, y: 200 };
+                    const pos = center && rfInstance ? rfInstance.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }) : { x: 200, y: 200 };
                     store.addNode({
                       id: crypto.randomUUID(),
                       type: "techNode",
