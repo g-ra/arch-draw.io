@@ -1,7 +1,6 @@
 import {
   Save, Download, Users, MessageSquare, Eye, EyeOff,
-  ZoomIn, ZoomOut, Maximize2, LayoutGrid, Trash2,
-  ChevronDown, Wifi, WifiOff, StickyNote, Type, MessageCircle
+  ChevronDown, Wifi, WifiOff, StickyNote, Type, MousePointer2, Trash2
 } from "lucide-react";
 import { AlignmentToolbar } from "./AlignmentToolbar";
 import { ReactFlowInstance } from "reactflow";
@@ -40,7 +39,7 @@ interface Props {
 }
 
 const TOOLS = [
-  { id: "select", icon: <MessageCircle size={15} />, label: "Select (V)", key: "v" },
+  { id: "select", icon: <MousePointer2 size={15} />, label: "Select (V)", key: "v" },
   { id: "sticky", icon: <StickyNote size={15} />, label: "Sticky (S)", key: "s" },
   { id: "text", icon: <Type size={15} />, label: "Text (T)", key: "t" },
 ];
@@ -101,17 +100,6 @@ export function ContextualToolbar(props: Props) {
             ))}
           </div>
 
-          <div className="w-px h-5 bg-[#2d3148]" />
-
-          {/* Auto Layout */}
-          <button
-            onClick={onAutoLayout}
-            title="Auto Layout"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#1e2130] text-slate-400 text-sm border border-[#2d3148] hover:text-white transition-colors"
-          >
-            <LayoutGrid size={14} /> Layout
-          </button>
-
           {/* Delete */}
           {hasSelection && (
             <button
@@ -122,31 +110,6 @@ export function ContextualToolbar(props: Props) {
               <Trash2 size={14} /> Delete
             </button>
           )}
-
-          {/* Zoom */}
-          <div className="flex items-center gap-0.5 border border-[#2d3148] rounded-lg overflow-hidden">
-            <button
-              onClick={() => rfInstance?.zoomIn()}
-              title="Zoom In"
-              className="px-2 py-1.5 bg-[#1e2130] text-slate-400 hover:text-white hover:bg-[#252836] transition-colors"
-            >
-              <ZoomIn size={14} />
-            </button>
-            <button
-              onClick={() => rfInstance?.zoomOut()}
-              title="Zoom Out"
-              className="px-2 py-1.5 bg-[#1e2130] text-slate-400 hover:text-white hover:bg-[#252836] transition-colors border-l border-[#2d3148]"
-            >
-              <ZoomOut size={14} />
-            </button>
-            <button
-              onClick={() => rfInstance?.fitView({ padding: 0.2 })}
-              title="Fit View"
-              className="px-2 py-1.5 bg-[#1e2130] text-slate-400 hover:text-white hover:bg-[#252836] transition-colors border-l border-[#2d3148]"
-            >
-              <Maximize2 size={14} />
-            </button>
-          </div>
 
           <div className="w-px h-5 bg-[#2d3148]" />
         </>
