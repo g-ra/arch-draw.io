@@ -133,11 +133,17 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
         <>
           {/* Top */}
           <button
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
             onClick={(e) => {
               e.stopPropagation();
+              e.preventDefault();
+              console.log("[QuickAdd] Top button clicked");
               data.onQuickAdd?.(id, "top");
             }}
-            className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all pointer-events-auto"
+            style={{ zIndex: 1000 }}
             title="Add connected node above"
           >
             <Plus size={14} />
@@ -145,11 +151,17 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
 
           {/* Left */}
           <button
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
             onClick={(e) => {
               e.stopPropagation();
+              e.preventDefault();
+              console.log("[QuickAdd] Left button clicked");
               data.onQuickAdd?.(id, "left");
             }}
-            className="absolute top-1/2 -translate-y-1/2 -left-2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            className="absolute top-1/2 -translate-y-1/2 -left-2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all pointer-events-auto"
+            style={{ zIndex: 1000 }}
             title="Add connected node to the left"
           >
             <Plus size={14} />
@@ -157,11 +169,17 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
 
           {/* Bottom */}
           <button
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
             onClick={(e) => {
               e.stopPropagation();
+              e.preventDefault();
+              console.log("[QuickAdd] Bottom button clicked");
               data.onQuickAdd?.(id, "bottom");
             }}
-            className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all pointer-events-auto"
+            style={{ zIndex: 1000 }}
             title="Add connected node below"
           >
             <Plus size={14} />
@@ -169,11 +187,17 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
 
           {/* Right */}
           <button
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
             onClick={(e) => {
               e.stopPropagation();
+              e.preventDefault();
+              console.log("[QuickAdd] Right button clicked");
               data.onQuickAdd?.(id, "right");
             }}
-            className="absolute top-1/2 -translate-y-1/2 -right-2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            className="absolute top-1/2 -translate-y-1/2 -right-2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all pointer-events-auto"
+            style={{ zIndex: 1000 }}
             title="Add connected node to the right"
           >
             <Plus size={14} />
