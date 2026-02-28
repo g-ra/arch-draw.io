@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { DiagramEditor } from "./components/DiagramEditor";
 import { LoginPage } from "./components/LoginPage";
-import { Dashboard } from "./components/Dashboard";
 
-type Page = "login" | "dashboard" | "editor";
+type Page = "login" | "editor";
 
 export default function App() {
   const [page, setPage] = useState<Page>("login");
@@ -37,28 +36,39 @@ export default function App() {
       return;
     }
 
-    // Normal auth flow for dashboard
+    // Normal auth flow - go directly to editor
     fetch("/api/auth/me", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then((u) => {
-        if (u) { setUser(u); setPage("dashboard"); }
+        if (u) {
+          setUser(u);
+          setActiveDiagramId(null); // Start with unsaved diagram
+          setPage("editor");
+        }
       });
   }, []);
 
-  if (page === "login") return <LoginPage onLogin={(u) => { setUser(u); setPage("dashboard"); }} />;
-  if (page === "editor") return (
+  if (page === "login") {
+    return (
+      <LoginPage
+        onLogin={(u) => {
+          setUser(u);
+          setActiveDiagramId(null); // Start with unsaved diagram
+          setPage("editor");
+        }}
+      />
+    );
+  }
+
+  return (
     <DiagramEditor
       diagramId={activeDiagramId}
       currentUser={user}
-      onBack={() => setPage("dashboard")}
-    />
-  );
-
-  return (
-    <Dashboard
-      user={user!}
-      onOpenDiagram={(id) => { setActiveDiagramId(id); setPage("editor"); }}
-      onLogout={() => { setUser(null); setPage("login"); }}
+      onBack={() => {
+        setUser(null);
+        setActiveDiagramId(null);
+        setPage("login");
+      }}
     />
   );
 }
