@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare, Smile, Trash2, CheckCircle, Circle, Send, Mic, MapPin } from "lucide-react";
+import { MessageSquare, Smile, Trash2, CheckCircle, Circle, Send, Mic } from "lucide-react";
 import { VoiceRecorderModal } from "./modals/VoiceRecorderModal";
 
 interface Comment {
@@ -36,17 +36,15 @@ interface Props {
   diagramId: string;
   currentUserId?: string;
   onClose: () => void;
-  onPinMode?: (enabled: boolean) => void;
 }
 
-export function CommentsPanel({ diagramId, currentUserId, onClose, onPinMode }: Props) {
+export function CommentsPanel({ diagramId, currentUserId, onClose }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "open" | "resolved">("open");
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
-  const [pinModeActive, setPinModeActive] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -207,12 +205,6 @@ export function CommentsPanel({ diagramId, currentUserId, onClose, onPinMode }: 
     }
   };
 
-  const togglePinMode = () => {
-    const newState = !pinModeActive;
-    setPinModeActive(newState);
-    onPinMode?.(newState);
-  };
-
   // Filter comments
   const topLevelComments = comments.filter((c) => !c.parentId);
   const filteredComments = topLevelComments.filter((c) => {
@@ -271,33 +263,15 @@ export function CommentsPanel({ diagramId, currentUserId, onClose, onPinMode }: 
       </div>
 
       {/* Action buttons */}
-      <div className="border-b border-[#2d3148] p-3 flex gap-2">
+      <div className="border-b border-[#2d3148] p-3">
         <button
           onClick={() => setShowVoiceRecorder(true)}
-          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm transition-colors"
         >
           <Mic size={16} />
           Voice Comment
         </button>
-        <button
-          onClick={togglePinMode}
-          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-            pinModeActive
-              ? "bg-amber-600 hover:bg-amber-500 text-white"
-              : "bg-[#1e2130] hover:bg-[#252836] text-slate-300 border border-[#2d3148]"
-          }`}
-        >
-          <MapPin size={16} />
-          {pinModeActive ? "Pin Active" : "Pin to Canvas"}
-        </button>
       </div>
-
-      {/* Pin mode hint */}
-      {pinModeActive && (
-        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-xs text-amber-400">
-          📍 Click anywhere on the canvas to place a comment at that location
-        </div>
-      )}
 
       {/* Comments list */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

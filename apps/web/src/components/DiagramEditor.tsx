@@ -78,7 +78,6 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
   const [contextMenu, setContextMenu] = useState<{ nodeId: string; x: number; y: number } | null>(null);
   const [showSaveMacroModal, setShowSaveMacroModal] = useState(false);
   const [showCommentsPanel, setShowCommentsPanel] = useState(false);
-  const [pinModeActive, setPinModeActive] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const versionRef = useRef(0);
   const senderIdRef = useRef(crypto.randomUUID());
@@ -533,7 +532,7 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
   }, []);
 
   // Canvas click — place tool node or deselect
-  const onPaneClick = useCallback(async (e: React.MouseEvent) => {
+  const onPaneClick = useCallback((e: React.MouseEvent) => {
     const state = useDiagramStore.getState();
 
     if (!rfInstance || state.viewMode) {
@@ -544,33 +543,6 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
     }
 
     const pos = rfInstance.screenToFlowPosition({ x: e.clientX, y: e.clientY });
-
-    // Pin mode - create position comment
-    if (pinModeActive && diagramId) {
-      const commentText = prompt("Enter comment text:");
-      if (commentText && commentText.trim()) {
-        try {
-          await fetch("/api/comments", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              diagramId,
-              content: commentText.trim(),
-              type: "position",
-              posX: pos.x,
-              posY: pos.y,
-            }),
-          });
-          setPinModeActive(false);
-        } catch (err) {
-          console.error("Failed to create position comment:", err);
-        }
-      } else {
-        setPinModeActive(false);
-      }
-      return;
-    }
 
     if (state.tool === "sticky") {
       state.addNode({
@@ -616,7 +588,7 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
     state.setSelectedNodeId(null);
     state.setSelectedEdgeId(null);
     state.clearHighlight();
-  }, [rfInstance, sendUpdateImmediate, pinModeActive, diagramId]);
+  }, [rfInstance, sendUpdateImmediate]);
 
   // Drag from panel
   const onDragStart = useCallback((e: React.DragEvent, template: NodeTemplate) => {
@@ -717,8 +689,7 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
 
   // Cursor style based on tool
   const cursorStyle: React.CSSProperties = {
-    cursor: pinModeActive ? "crosshair"
-          : store.tool === "sticky" ? "cell"
+    cursor: store.tool === "sticky" ? "cell"
           : store.tool === "text"   ? "text"
           : store.tool === "comment"? "crosshair"
           : "default",
@@ -1061,7 +1032,6 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
             diagramId={diagramId}
             currentUserId={currentUser?.id}
             onClose={() => setShowCommentsPanel(false)}
-            onPinMode={(enabled) => setPinModeActive(enabled)}
           />
         )}
       </div>
