@@ -25,11 +25,16 @@ const USER_COLORS = [
 export function UserPresence({ diagramId, currentUserName }: Props) {
   const [users, setUsers] = useState<User[]>([]);
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [userId] = useState(() => {
+    const stored = localStorage.getItem("tf_user_id");
+    if (stored) return stored;
+    const newId = crypto.randomUUID();
+    localStorage.setItem("tf_user_id", newId);
+    return newId;
+  });
 
+  // Create WebSocket connection once
   useEffect(() => {
-    const userId = localStorage.getItem("tf_user_id") || crypto.randomUUID();
-    localStorage.setItem("tf_user_id", userId);
-
     const socket = new WebSocket(`ws://${location.host}/ws/presence/${diagramId}`);
     setWs(socket);
 
@@ -75,7 +80,18 @@ export function UserPresence({ diagramId, currentUserName }: Props) {
       socket.close();
       window.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [diagramId, currentUserName]);
+  }, [diagramId, userId]);
+
+  // Update username when it changes
+  useEffect(() => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: "join",
+        userId,
+        userName: currentUserName || "Anonymous",
+      }));
+    }
+  }, [currentUserName, ws, userId]);
 
   return (
     <>
