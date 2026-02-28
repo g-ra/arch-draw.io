@@ -1,6 +1,5 @@
-import { memo, useState } from "react";
+import { memo } from "react";
 import { Handle, Position, NodeProps, NodeResizer } from "reactflow";
-import { Plus } from "lucide-react";
 import { TechNodeData } from "../../types/diagram";
 import { NODE_ICONS } from "../../lib/nodeIcons";
 
@@ -19,12 +18,10 @@ interface ExtendedProps extends NodeProps<TechNodeData> {
     _highlighted?: boolean;
     _dimmed?: boolean;
     _selected?: boolean;
-    onQuickAdd?: (nodeId: string, direction: "top" | "left" | "bottom" | "right") => void;
   };
 }
 
 export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
-  const [isHovered, setIsHovered] = useState(false);
   const cat = CATEGORY_COLORS[data.category] || CATEGORY_COLORS.custom;
   const color = data.customColor || cat.border;
   const bg = data.customColor ? data.customColor + "10" : cat.bg;
@@ -41,24 +38,18 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
 
   return (
     <div
-      className="relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{ padding: "12px" }}
+      className="relative min-w-[150px] h-full rounded-xl border-2 transition-all duration-200 cursor-default select-none"
+      style={{
+        borderColor: isHighlighted ? "#818cf8" : selected ? "#818cf8" : color,
+        background: bg,
+        opacity: isDimmed ? 0.25 : 1,
+        boxShadow: isHighlighted
+          ? `0 0 0 2px #818cf840, 0 0 20px ${color}30`
+          : selected
+          ? `0 0 0 2px #818cf840`
+          : "none",
+      }}
     >
-      <div
-        className="relative min-w-[150px] h-full rounded-xl border-2 transition-all duration-200 cursor-default select-none"
-        style={{
-          borderColor: isHighlighted ? "#818cf8" : selected ? "#818cf8" : color,
-          background: bg,
-          opacity: isDimmed ? 0.25 : 1,
-          boxShadow: isHighlighted
-            ? `0 0 0 2px #818cf840, 0 0 20px ${color}30`
-            : selected
-            ? `0 0 0 2px #818cf840`
-            : "none",
-        }}
-      >
       <NodeResizer
         minWidth={140}
         minHeight={60}
@@ -125,84 +116,6 @@ export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
         >
           {openComments.length}
         </div>
-      )}
-      </div>
-
-      {/* Quick add buttons on hover */}
-      {isHovered && data.onQuickAdd && (
-        <>
-          {/* Top */}
-          <button
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              console.log("[QuickAdd] Top button clicked");
-              data.onQuickAdd?.(id, "top");
-            }}
-            className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all pointer-events-auto"
-            style={{ zIndex: 1000 }}
-            title="Add connected node above"
-          >
-            <Plus size={14} />
-          </button>
-
-          {/* Left */}
-          <button
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              console.log("[QuickAdd] Left button clicked");
-              data.onQuickAdd?.(id, "left");
-            }}
-            className="absolute top-1/2 -translate-y-1/2 -left-2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all pointer-events-auto"
-            style={{ zIndex: 1000 }}
-            title="Add connected node to the left"
-          >
-            <Plus size={14} />
-          </button>
-
-          {/* Bottom */}
-          <button
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              console.log("[QuickAdd] Bottom button clicked");
-              data.onQuickAdd?.(id, "bottom");
-            }}
-            className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all pointer-events-auto"
-            style={{ zIndex: 1000 }}
-            title="Add connected node below"
-          >
-            <Plus size={14} />
-          </button>
-
-          {/* Right */}
-          <button
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              console.log("[QuickAdd] Right button clicked");
-              data.onQuickAdd?.(id, "right");
-            }}
-            className="absolute top-1/2 -translate-y-1/2 -right-2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all pointer-events-auto"
-            style={{ zIndex: 1000 }}
-            title="Add connected node to the right"
-          >
-            <Plus size={14} />
-          </button>
-        </>
       )}
     </div>
   );
