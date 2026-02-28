@@ -344,6 +344,54 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
     }
   }, [sendUpdate, sendUpdateImmediate, wsConnected]);
 
+  // Quick add connected node
+  const handleQuickAdd = useCallback((sourceNodeId: string, direction: "top" | "left" | "bottom" | "right") => {
+    const sourceNode = store.nodes.find(n => n.id === sourceNodeId);
+    if (!sourceNode) return;
+
+    const offsets = {
+      top: { x: 0, y: -150 },
+      bottom: { x: 0, y: 150 },
+      left: { x: -250, y: 0 },
+      right: { x: 250, y: 0 },
+    };
+
+    const handleMap = {
+      top: { source: "target-top", target: "source-bottom" },
+      bottom: { source: "source-bottom", target: "target-top" },
+      left: { source: "target-left", target: "source-right" },
+      right: { source: "source-right", target: "target-left" },
+    };
+
+    const offset = offsets[direction];
+    const handles = handleMap[direction];
+    const newNodeId = crypto.randomUUID();
+
+    // Add new node
+    store.addNode({
+      id: newNodeId,
+      type: "techNode",
+      position: {
+        x: sourceNode.position.x + offset.x,
+        y: sourceNode.position.y + offset.y,
+      },
+      data: { label: "Microservice", category: "backend", tech: "service" },
+    });
+
+    // Add edge connection
+    store.addEdge({
+      id: `${sourceNodeId}-${newNodeId}`,
+      source: sourceNodeId,
+      target: newNodeId,
+      sourceHandle: handles.source,
+      targetHandle: handles.target,
+      type: "default",
+      data: { label: "HTTP" },
+    });
+
+    sendUpdateImmediate();
+  }, [sendUpdateImmediate]);
+
   // Wrapper for onConnect that sends WS update
   const handleConnect = useCallback((connection: Connection) => {
     store.onConnect(connection);
@@ -415,10 +463,11 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
         ...n.data,
         _highlighted: hasHighlight && store.highlightedNodeIds.has(n.id),
         _dimmed: hasHighlight && !store.highlightedNodeIds.has(n.id),
+        onQuickAdd: n.type === "techNode" && !store.viewMode ? handleQuickAdd : undefined,
       },
       draggable: !store.viewMode,
     }));
-  }, [store.nodes, store.highlightedNodeIds, store.viewMode]);
+  }, [store.nodes, store.highlightedNodeIds, store.viewMode, handleQuickAdd]);
 
   // Edges with highlight
   const displayEdges = useMemo(() => {

@@ -1,5 +1,6 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Handle, Position, NodeProps, NodeResizer } from "reactflow";
+import { Plus } from "lucide-react";
 import { TechNodeData } from "../../types/diagram";
 import { NODE_ICONS } from "../../lib/nodeIcons";
 
@@ -18,10 +19,12 @@ interface ExtendedProps extends NodeProps<TechNodeData> {
     _highlighted?: boolean;
     _dimmed?: boolean;
     _selected?: boolean;
+    onQuickAdd?: (nodeId: string, direction: "top" | "left" | "bottom" | "right") => void;
   };
 }
 
-export const TechNode = memo(({ data, selected }: ExtendedProps) => {
+export const TechNode = memo(({ data, selected, id }: ExtendedProps) => {
+  const [isHovered, setIsHovered] = useState(false);
   const cat = CATEGORY_COLORS[data.category] || CATEGORY_COLORS.custom;
   const color = data.customColor || cat.border;
   const bg = data.customColor ? data.customColor + "10" : cat.bg;
@@ -49,6 +52,8 @@ export const TechNode = memo(({ data, selected }: ExtendedProps) => {
           ? `0 0 0 2px #818cf840`
           : "none",
       }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <NodeResizer
         minWidth={140}
@@ -116,6 +121,59 @@ export const TechNode = memo(({ data, selected }: ExtendedProps) => {
         >
           {openComments.length}
         </div>
+      )}
+
+      {/* Quick add buttons on hover */}
+      {isHovered && data.onQuickAdd && (
+        <>
+          {/* Top */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onQuickAdd?.(id, "top");
+            }}
+            className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            title="Add connected node above"
+          >
+            <Plus size={14} />
+          </button>
+
+          {/* Left */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onQuickAdd?.(id, "left");
+            }}
+            className="absolute top-1/2 -translate-y-1/2 -left-3 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            title="Add connected node to the left"
+          >
+            <Plus size={14} />
+          </button>
+
+          {/* Bottom */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onQuickAdd?.(id, "bottom");
+            }}
+            className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            title="Add connected node below"
+          >
+            <Plus size={14} />
+          </button>
+
+          {/* Right */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onQuickAdd?.(id, "right");
+            }}
+            className="absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all z-10"
+            title="Add connected node to the right"
+          >
+            <Plus size={14} />
+          </button>
+        </>
       )}
     </div>
   );
