@@ -24,6 +24,7 @@ import { ShareModal } from "./modals/ShareModal";
 import { GuestNameModal } from "./modals/GuestNameModal";
 import { NodeContextMenu } from "./NodeContextMenu";
 import { UserPresence } from "./UserPresence";
+import { CommentsPanel } from "./CommentsPanel";
 import { useDiagramStore } from "../stores/diagramStore";
 import { NodeTemplate } from "../lib/nodeLibrary";
 import { useExport } from "../hooks/useExport";
@@ -76,6 +77,7 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
   const [showGuestNameModal, setShowGuestNameModal] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ nodeId: string; x: number; y: number } | null>(null);
   const [showSaveMacroModal, setShowSaveMacroModal] = useState(false);
+  const [showCommentsPanel, setShowCommentsPanel] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const versionRef = useRef(0);
   const senderIdRef = useRef(crypto.randomUUID());
@@ -790,6 +792,16 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
           </button>
         )}
 
+        {/* Comments */}
+        {diagramId && (
+          <button
+            onClick={() => setShowCommentsPanel(!showCommentsPanel)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1e2130] text-slate-300 text-sm border border-[#2d3148] hover:text-white transition-colors"
+          >
+            <MessageSquare size={14} /> Comments
+          </button>
+        )}
+
         {/* Save */}
         {!store.viewMode && (
           <button
@@ -905,6 +917,15 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
             node={selectedNode as Node<TechNodeData>}
             connectedCount={store.highlightedNodeIds.size - 1}
             onClose={() => { store.setSelectedNodeId(null); store.clearHighlight(); }}
+          />
+        )}
+
+        {/* Comments panel */}
+        {showCommentsPanel && diagramId && (
+          <CommentsPanel
+            diagramId={diagramId}
+            currentUserId={currentUser?.id}
+            onClose={() => setShowCommentsPanel(false)}
           />
         )}
       </div>
