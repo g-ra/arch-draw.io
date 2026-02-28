@@ -144,7 +144,7 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log("[WS] Connected");
+        console.log("[WS] Connected to diagram sync");
         setWsConnected(true);
         reconnectAttemptsRef.current = 0;
 
