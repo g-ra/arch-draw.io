@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MessageSquare, Smile, Trash2, CheckCircle, Circle, Send, Mic } from "lucide-react";
 import { VoiceRecorderModal } from "./modals/VoiceRecorderModal";
 
@@ -45,10 +45,53 @@ export function CommentsPanel({ diagramId, currentUserId, onClose }: Props) {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "open" | "resolved">("open");
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     loadComments();
+    connectWebSocket();
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
   }, [diagramId]);
+
+  const connectWebSocket = () => {
+    const ws = new WebSocket(`ws://${location.host}/ws/diagram/${diagramId}`);
+    wsRef.current = ws;
+
+    ws.onmessage = async (e) => {
+      try {
+        let data = e.data;
+        if (data instanceof Blob) {
+          data = await data.text();
+        }
+        const msg = JSON.parse(data);
+
+        // Handle comment events
+        if (msg.type === "comment_event") {
+          loadComments();
+        }
+      } catch (err) {
+        console.error("WS message error:", err);
+      }
+    };
+
+    ws.onerror = (err) => {
+      console.error("WS error:", err);
+    };
+  };
+
+  const broadcastCommentEvent = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: "comment_event",
+        timestamp: Date.now(),
+      }));
+    }
+  };
 
   const loadComments = async () => {
     try {
@@ -86,6 +129,7 @@ export function CommentsPanel({ diagramId, currentUserId, onClose }: Props) {
         setNewComment("");
         setReplyTo(null);
         loadComments();
+        broadcastCommentEvent();
       }
     } catch (err) {
       console.error("Failed to add comment:", err);
@@ -109,6 +153,7 @@ export function CommentsPanel({ diagramId, currentUserId, onClose }: Props) {
       if (res.ok) {
         setReplyTo(null);
         loadComments();
+        broadcastCommentEvent();
       }
     } catch (err) {
       console.error("Failed to add voice comment:", err);
@@ -124,6 +169,7 @@ export function CommentsPanel({ diagramId, currentUserId, onClose }: Props) {
         body: JSON.stringify({ emoji }),
       });
       loadComments();
+      broadcastCommentEvent();
     } catch (err) {
       console.error("Failed to toggle reaction:", err);
     }
@@ -138,6 +184,7 @@ export function CommentsPanel({ diagramId, currentUserId, onClose }: Props) {
         body: JSON.stringify({ resolved: !resolved }),
       });
       loadComments();
+      broadcastCommentEvent();
     } catch (err) {
       console.error("Failed to toggle resolved:", err);
     }
@@ -152,6 +199,7 @@ export function CommentsPanel({ diagramId, currentUserId, onClose }: Props) {
         credentials: "include",
       });
       loadComments();
+      broadcastCommentEvent();
     } catch (err) {
       console.error("Failed to delete comment:", err);
     }
