@@ -5,6 +5,7 @@ import { NODE_ICONS } from "../lib/nodeIcons";
 import { Search, Plus, Map, Blocks, Trash2, Upload } from "lucide-react";
 import { useDiagramStore } from "../stores/diagramStore";
 import { ReactFlowInstance } from "reactflow";
+import { AddNodeTypeModal } from "./modals/AddNodeTypeModal";
 
 interface Props {
   onDragStart: (e: React.DragEvent, template: NodeTemplate) => void;
@@ -22,6 +23,7 @@ export function NodePanel({ onDragStart, onCreateCustom, rfInstance }: Props) {
   const [libraryMacros, setLibraryMacros] = useState<(MacroDefinition & { libraryId: string })[]>([]);
   const [libraryError, setLibraryError] = useState(false);
   const [libraryLoading, setLibraryLoading] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     loadNodeTypes();
@@ -81,6 +83,24 @@ export function NodePanel({ onDragStart, onCreateCustom, rfInstance }: Props) {
     const center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     const pos = rfInstance?.screenToFlowPosition(center) ?? { x: 200, y: 200 };
     insertMacro(macro, pos);
+  };
+
+  const handleAddNodeType = async (data: any) => {
+    try {
+      const res = await fetch("/api/node-types", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const newType = await res.json();
+        useDiagramStore.getState().addNodeType(newType);
+        setShowAddModal(false);
+      }
+    } catch (err) {
+      console.error("Failed to add node type:", err);
+    }
   };
 
   const allTemplates = [...nodeTypes, ...customTemplates];
@@ -207,10 +227,16 @@ export function NodePanel({ onDragStart, onCreateCustom, rfInstance }: Props) {
             )}
           </div>
 
-          <div className="p-2 border-t border-[#2d3148]">
+          <div className="p-2 border-t border-[#2d3148] space-y-2">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-[#2d3148] text-slate-500 hover:text-indigo-400 hover:border-indigo-500 text-xs transition-colors"
+            >
+              <Plus size={12} /> Add Node Type
+            </button>
             <button
               onClick={onCreateCustom}
-              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-[#2d3148] text-slate-500 hover:text-indigo-400 hover:border-indigo-500 text-xs transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-[#2d3148] text-slate-500 hover:text-slate-400 hover:border-slate-500 text-xs transition-colors"
             >
               <Plus size={12} /> Create custom node
             </button>
@@ -273,6 +299,13 @@ export function NodePanel({ onDragStart, onCreateCustom, rfInstance }: Props) {
             </div>
           )}
         </div>
+      )}
+
+      {showAddModal && (
+        <AddNodeTypeModal
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleAddNodeType}
+        />
       )}
     </div>
   );
