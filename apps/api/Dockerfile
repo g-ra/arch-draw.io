@@ -7,7 +7,7 @@ RUN npm install -g pnpm@10.30.3
 WORKDIR /app
 
 # Copy workspace files
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml .npmrc ./
 COPY apps/api/package.json ./apps/api/
 
 # Install dependencies
@@ -32,7 +32,7 @@ RUN npm install -g pnpm@10.30.3
 WORKDIR /app
 
 # Copy workspace files for production install
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml .npmrc ./
 COPY apps/api/package.json ./apps/api/
 
 # Install all dependencies (including prisma CLI for generation)
