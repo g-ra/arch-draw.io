@@ -1,8 +1,8 @@
 # Build stage
 FROM node:20-alpine AS builder
 
-# Install pnpm directly
-RUN npm install -g pnpm@10.30.3
+# Install pnpm directly with npm mirror
+RUN npm install -g pnpm@10.30.3 --registry=https://registry.npmmirror.com
 
 WORKDIR /app
 
