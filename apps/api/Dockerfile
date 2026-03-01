@@ -6,6 +6,9 @@ RUN npm install -g pnpm@10.30.3
 
 WORKDIR /app
 
+# Set Prisma engine mirror for downloads without VPN
+ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
+
 # Copy workspace files
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml .npmrc ./
 COPY apps/api/package.json ./apps/api/
