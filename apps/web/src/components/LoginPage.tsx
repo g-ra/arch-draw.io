@@ -4,21 +4,94 @@ interface Props {
   onLogin: (user: { id: string; name: string; email: string }) => void;
 }
 
+type LoginState =
+  | { mode: "email-input" }
+  | { mode: "totp-setup"; qrCode: string; secret: string }
+  | { mode: "totp-verify" }
+  | { mode: "pending-activation" }
+  | { mode: "error"; message: string };
+
 export function LoginPage({ onLogin }: Props) {
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [state, setState] = useState<LoginState>({ mode: "email-input" });
+  const [loading, setLoading] = useState(false);
 
-  const handleDevLogin = async () => {
-    const res = await fetch("/api/auth/dev-login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ email, name }),
-    });
-    if (res.ok) {
-      const { user } = await res.json();
-      onLogin(user);
+  const handleContinue = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        if (data.needsSetup) {
+          setState({
+            mode: "totp-setup",
+            qrCode: data.qrCode,
+            secret: data.secret,
+          });
+        } else if (data.user) {
+          onLogin(data.user);
+        }
+      } else if (res.status === 400 && data.error === "Code required") {
+        setState({ mode: "totp-verify" });
+      } else {
+        setState({ mode: "error", message: data.error || "Login failed" });
+        setTimeout(() => setState({ mode: "email-input" }), 3000);
+      }
+    } catch (error) {
+      setState({ mode: "error", message: "Network error" });
+      setTimeout(() => setState({ mode: "email-input" }), 3000);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleVerify = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, code }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.user) {
+        onLogin(data.user);
+      } else if (res.status === 403 && data.status === "pending") {
+        setState({ mode: "pending-activation" });
+      } else {
+        setState({ mode: "error", message: data.error || "Invalid code" });
+        setTimeout(() => {
+          if (state.mode === "totp-setup") {
+            setState({ mode: "totp-setup", qrCode: (state as any).qrCode, secret: (state as any).secret });
+          } else {
+            setState({ mode: "totp-verify" });
+          }
+        }, 3000);
+      }
+    } catch (error) {
+      setState({ mode: "error", message: "Network error" });
+      setTimeout(() => setState({ mode: "totp-verify" }), 3000);
+    } finally {
+      setLoading(false);
+      setCode("");
+    }
+  };
+
+  const handleBack = () => {
+    setEmail("");
+    setCode("");
+    setState({ mode: "email-input" });
   };
 
   return (
@@ -29,36 +102,121 @@ export function LoginPage({ onLogin }: Props) {
           <p className="text-slate-400">Architecture Diagrams & Data Flow</p>
         </div>
 
-        {/* Dev login */}
-        <div className="space-y-3">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Name"
-            className="w-full px-4 py-2.5 rounded-lg bg-[#0f1117] border border-[#2d3148] text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-          />
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="w-full px-4 py-2.5 rounded-lg bg-[#0f1117] border border-[#2d3148] text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-          />
-          <button
-            onClick={handleDevLogin}
-            className="w-full py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-500 transition-colors"
-          >
-            Dev Login
-          </button>
-        </div>
+        {/* Email Input */}
+        {state.mode === "email-input" && (
+          <div className="space-y-3">
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              type="email"
+              className="w-full px-4 py-2.5 rounded-lg bg-[#0f1117] border border-[#2d3148] text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              onKeyDown={(e) => e.key === "Enter" && handleContinue()}
+            />
+            <button
+              onClick={handleContinue}
+              disabled={loading || !email}
+              className="w-full py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-500 transition-colors disabled:opacity-50"
+            >
+              {loading ? "Loading..." : "Continue"}
+            </button>
+          </div>
+        )}
+
+        {/* TOTP Setup */}
+        {state.mode === "totp-setup" && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-white text-center">
+              Setup Two-Factor Authentication
+            </h2>
+            <div className="bg-white p-4 rounded-lg">
+              <img src={state.qrCode} alt="QR Code" className="w-full" />
+            </div>
+            <div className="text-sm text-slate-400 text-center">
+              <p className="mb-2">Scan with Google Authenticator or Authy</p>
+              <p className="font-mono text-xs break-all">{state.secret}</p>
+            </div>
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="6-digit code"
+              className="w-full px-4 py-2.5 rounded-lg bg-[#0f1117] border border-[#2d3148] text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-center text-2xl tracking-widest"
+              onKeyDown={(e) => e.key === "Enter" && code.length === 6 && handleVerify()}
+            />
+            <button
+              onClick={handleVerify}
+              disabled={loading || code.length !== 6}
+              className="w-full py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-500 transition-colors disabled:opacity-50"
+            >
+              {loading ? "Verifying..." : "Verify & Login"}
+            </button>
+            <button
+              onClick={handleBack}
+              className="w-full text-slate-400 hover:text-white text-sm"
+            >
+              ← Back
+            </button>
+          </div>
+        )}
+
+        {/* TOTP Verify */}
+        {state.mode === "totp-verify" && (
+          <div className="space-y-3">
+            <input
+              value={email}
+              disabled
+              className="w-full px-4 py-2.5 rounded-lg bg-[#0f1117] border border-[#2d3148] text-slate-500"
+            />
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="6-digit code"
+              className="w-full px-4 py-2.5 rounded-lg bg-[#0f1117] border border-[#2d3148] text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-center text-2xl tracking-widest"
+              onKeyDown={(e) => e.key === "Enter" && code.length === 6 && handleVerify()}
+            />
+            <button
+              onClick={handleVerify}
+              disabled={loading || code.length !== 6}
+              className="w-full py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-500 transition-colors disabled:opacity-50"
+            >
+              {loading ? "Logging in..." : "Login"}
+            </button>
+            <button
+              onClick={handleBack}
+              className="w-full text-slate-400 hover:text-white text-sm"
+            >
+              ← Change email
+            </button>
+          </div>
+        )}
+
+        {/* Pending Activation */}
+        {state.mode === "pending-activation" && (
+          <div className="text-center space-y-4">
+            <div className="text-6xl">⏳</div>
+            <h2 className="text-xl font-semibold text-white">
+              Account Pending Activation
+            </h2>
+            <p className="text-slate-400">
+              Administrator will review your request
+            </p>
+            <button
+              onClick={handleBack}
+              className="w-full py-2.5 rounded-lg border border-[#2d3148] text-white hover:bg-[#2d3148] transition-colors"
+            >
+              ← Back to login
+            </button>
+          </div>
+        )}
+
+        {/* Error State */}
+        {state.mode === "error" && (
+          <div className="text-center space-y-4">
+            <div className="text-6xl">❌</div>
+            <p className="text-red-400">{state.message}</p>
+          </div>
+        )}
       </div>
     </div>
-  );
-}
-
-function GithubIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
-    </svg>
   );
 }
