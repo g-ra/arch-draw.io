@@ -17,10 +17,9 @@ export function generateTOTPSecret(): string {
  */
 export async function generateQRCode(secret: string, email: string): Promise<string> {
   const otpauth = generateURI({
-    type: 'totp',
-    secret,
-    label: email,
     issuer: TOTP_ISSUER,
+    label: email,
+    secret,
   });
   return await QRCode.toDataURL(otpauth);
 }
@@ -45,9 +44,9 @@ export function verifyTOTPCode(secret: string, code: string, isDevMode: boolean)
   // Verify with ±1 time window (30 seconds)
   try {
     const result = verifySync({
-      type: 'totp',
       secret,
       token: code,
+      window: 1,
     });
     return result.valid;
   } catch {

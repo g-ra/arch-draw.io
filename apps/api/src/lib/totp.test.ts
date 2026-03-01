@@ -24,10 +24,7 @@ describe('TOTP Utilities', () => {
   });
 
   test('verifyTOTPCode accepts valid code', () => {
-    const validCode = generateSync({
-      type: 'totp',
-      secret,
-    });
+    const validCode = generateSync({ secret });
 
     const result = verifyTOTPCode(secret, validCode, false);
     expect(result).toBe(true);

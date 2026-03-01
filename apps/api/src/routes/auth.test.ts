@@ -124,10 +124,7 @@ describe('POST /api/auth/login', () => {
     });
 
     // Generate valid TOTP code
-    const validCode = generateSync({
-      type: 'totp',
-      secret,
-    });
+    const validCode = generateSync({ secret });
 
     const response = await app.inject({
       method: 'POST',
@@ -168,10 +165,7 @@ describe('POST /api/auth/login', () => {
     });
 
     // Generate valid TOTP code
-    const validCode = generateSync({
-      type: 'totp',
-      secret,
-    });
+    const validCode = generateSync({ secret });
 
     const response = await app.inject({
       method: 'POST',
@@ -205,7 +199,7 @@ describe('POST /api/auth/login', () => {
       url: '/api/auth/login',
       payload: {
         email: 'invalidcode@example.com',
-        code: '000000', // Invalid code
+        code: '999999', // Invalid code (not the dev static code)
       },
     });
 
