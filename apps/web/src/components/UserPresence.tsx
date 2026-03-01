@@ -35,7 +35,8 @@ export function UserPresence({ diagramId, currentUserName }: Props) {
 
   // Create WebSocket connection once
   useEffect(() => {
-    const socket = new WebSocket(`ws://${location.host}/ws/presence/${diagramId}`);
+    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const socket = new WebSocket(`${wsProtocol}//${location.host}/ws/presence/${diagramId}`);
     setWs(socket);
 
     socket.onopen = () => {

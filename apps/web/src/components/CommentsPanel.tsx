@@ -59,7 +59,8 @@ export function CommentsPanel({ diagramId, currentUserId, onClose }: Props) {
   }, [diagramId]);
 
   const connectWebSocket = () => {
-    const ws = new WebSocket(`ws://${location.host}/ws/diagram/${diagramId}`);
+    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${wsProtocol}//${location.host}/ws/diagram/${diagramId}`);
     wsRef.current = ws;
 
     ws.onmessage = async (e) => {

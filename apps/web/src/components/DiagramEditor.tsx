@@ -148,7 +148,8 @@ function EditorInner({ diagramId, currentUser, onBack }: Props) {
     let reconnectTimeout: number | null = null;
 
     const connect = () => {
-      const ws = new WebSocket(`ws://${location.host}/ws/diagram/${diagramId}`);
+      const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${wsProtocol}//${location.host}/ws/diagram/${diagramId}`);
       wsRef.current = ws;
 
       ws.onopen = () => {
