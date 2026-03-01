@@ -12,8 +12,17 @@ model User {
   email         String    @unique
   name          String
   avatar        String?
+
+  // TOTP Authentication
+  totpSecret    String?   @map("totp_secret")
+
+  // User Moderation
+  isActive      Boolean   @default(false) @map("is_active")
+
+  // OAuth (kept for compatibility)
   oauthProvider String?   @map("oauth_provider")
   oauthId       String?   @map("oauth_id")
+
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
