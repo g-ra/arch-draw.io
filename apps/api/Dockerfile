@@ -42,10 +42,11 @@ RUN pnpm install --frozen-lockfile
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 
-WORKDIR /app/apps/api
+# Copy generated Prisma client from builder
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
-# Generate Prisma client
-RUN pnpm prisma generate
+WORKDIR /app/apps/api
 
 # Create uploads directory
 RUN mkdir -p uploads
