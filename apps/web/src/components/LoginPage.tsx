@@ -5,8 +5,8 @@ interface Props {
 }
 
 export function LoginPage({ onLogin }: Props) {
-  const [email, setEmail] = useState("dev@techflow.io");
-  const [name, setName] = useState("Dev User");
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
 
   const handleDevLogin = async () => {
     const res = await fetch("/api/auth/dev-login", {
@@ -27,24 +27,6 @@ export function LoginPage({ onLogin }: Props) {
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-white mb-2">TechFlow</h1>
           <p className="text-slate-400">Architecture Diagrams & Data Flow</p>
-        </div>
-
-        {/* GitHub OAuth */}
-        <a
-          href="/api/auth/github"
-          className="flex items-center justify-center gap-3 w-full py-3 px-4 rounded-lg bg-white text-gray-900 font-medium hover:bg-gray-100 transition-colors mb-4"
-        >
-          <GithubIcon />
-          Continue with GitHub
-        </a>
-
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[#2d3148]" />
-          </div>
-          <div className="relative flex justify-center text-xs text-slate-500">
-            <span className="px-2 bg-[#1a1d2e]">or dev login</span>
-          </div>
         </div>
 
         {/* Dev login */}
