@@ -9,7 +9,6 @@ WORKDIR /app
 # Copy workspace files
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/
-COPY packages ./packages
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
@@ -35,7 +34,6 @@ WORKDIR /app
 # Copy workspace files for production install
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/
-COPY packages ./packages
 
 # Install all dependencies (including prisma CLI for generation)
 RUN pnpm install --frozen-lockfile
