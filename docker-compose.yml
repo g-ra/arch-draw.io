@@ -1,3 +1,4 @@
+version: "3.9"
 services:
   postgres:
     image: postgres:16-alpine
@@ -7,8 +8,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-techflow}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-techflow_secret}
       POSTGRES_DB: ${POSTGRES_DB:-techflow}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -30,11 +29,9 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FRONTEND_URL: ${FRONTEND_URL:-https://draw.g3ra.ru}
       PORT: 3001
       NODE_ENV: ${NODE_ENV:-production}
-    ports:
-      - "${API_PORT:-3001}:3001"
     volumes:
       - api_uploads:/app/apps/api/uploads
     depends_on:
@@ -42,22 +39,59 @@ services:
         condition: service_healthy
     networks:
       - techflow_network
+      - proxy
     command: sh -c "cd /app/apps/api && npx prisma migrate deploy && node dist/index.js"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      # API routes (/api/*)
+      - "traefik.http.routers.techflow-api.rule=Host(`draw.g3ra.ru`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.techflow-api.entrypoints=websecure"
+      - "traefik.http.routers.techflow-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.techflow-api.priority=100"
+      - "traefik.http.routers.techflow-api.service=techflow-api-svc"
+
+      # WebSocket routes (/ws)
+      - "traefik.http.routers.techflow-ws.rule=Host(`draw.g3ra.ru`) && PathPrefix(`/ws`)"
+      - "traefik.http.routers.techflow-ws.entrypoints=websecure"
+      - "traefik.http.routers.techflow-ws.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.techflow-ws.priority=100"
+      - "traefik.http.routers.techflow-ws.service=techflow-api-svc"
+
+      # Uploads routes (/uploads/*)
+      - "traefik.http.routers.techflow-uploads.rule=Host(`draw.g3ra.ru`) && PathPrefix(`/uploads`)"
+      - "traefik.http.routers.techflow-uploads.entrypoints=websecure"
+      - "traefik.http.routers.techflow-uploads.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.techflow-uploads.priority=100"
+      - "traefik.http.routers.techflow-uploads.service=techflow-api-svc"
+
+      # Service definition
+      - "traefik.http.services.techflow-api-svc.loadbalancer.server.port=3001"
 
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+        VITE_API_URL: /api
     container_name: techflow_web
     restart: unless-stopped
-    ports:
-      - "${WEB_PORT:-80}:80"
     depends_on:
       - api
     networks:
       - techflow_network
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      # Catch-all for frontend (lower priority)
+      - "traefik.http.routers.techflow-web.rule=Host(`draw.g3ra.ru`)"
+      - "traefik.http.routers.techflow-web.entrypoints=websecure"
+      - "traefik.http.routers.techflow-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.techflow-web.priority=10"
+      - "traefik.http.services.techflow-web.loadbalancer.server.port=80"
 
 volumes:
   postgres_data:
@@ -66,3 +100,5 @@ volumes:
 networks:
   techflow_network:
     driver: bridge
+  proxy:
+    external: true

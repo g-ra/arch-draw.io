@@ -5,6 +5,7 @@
 - Docker и Docker Compose установлены на сервере
 - Домен настроен (опционально, для SSL)
 - GitHub OAuth App создан (для авторизации)
+- Traefik настроен (для production с SSL)
 
 ## Quick Start
 
@@ -51,11 +52,64 @@ docker compose logs -f
 - Frontend: `http://your-server-ip` или `https://your-domain.com`
 - API health: `http://your-server-ip:3001/health`
 
+## Traefik Integration
+
+Это приложение разработано для работы с существующим Traefik setup.
+
+### Требования
+
+- Traefik запущен с включенным Docker provider
+- Внешняя сеть `proxy` создана
+- Certificate resolver `letsencrypt` настроен
+- Порты 80 и 443 обрабатываются Traefik
+
+### Архитектура
+
+- Traefik маршрутизирует `/api/*`, `/ws`, `/uploads/*` напрямую к API service
+- Traefik маршрутизирует всё остальное к web service (статические файлы)
+- Контейнеры не экспонируют порты (Traefik обрабатывает весь внешний доступ)
+
+### Deployment
+
+```bash
+# 1. Убедись что сеть Traefik существует
+docker network create proxy
+
+# 2. Настрой окружение
+cp .env.production.example .env
+nano .env
+
+# 3. Deploy
+docker compose up -d --build
+
+# 4. Проверь Traefik dashboard для верификации маршрутов
+```
+
+### Troubleshooting
+
+- Проверь логи Traefik: `docker logs traefik`
+- Верифицируй маршруты в Traefik dashboard
+- Убедись что контейнеры в сети `proxy`: `docker network inspect proxy`
+
+### Проверка после деплоя
+
+```bash
+# Проверь статус контейнеров
+docker compose ps
+
+# Проверь HTTPS доступ
+curl -I https://draw.g3ra.ru
+curl -I https://draw.g3ra.ru/api/health
+
+# Проверь сетевое подключение
+docker network inspect proxy | grep techflow
+```
+
 ## Production Setup
 
-### SSL с Traefik (рекомендуется)
+### SSL с отдельным Traefik (альтернатива)
 
-Создай `docker-compose.prod.yml`:
+Если у тебя нет существующего Traefik, создай `docker-compose.prod.yml`:
 
 ```yaml
 services:
@@ -75,14 +129,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - traefik_letsencrypt:/letsencrypt
     networks:
-      - techflow_network
-
-  web:
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.web.rule=Host(`your-domain.com`)"
-      - "traefik.http.routers.web.entrypoints=websecure"
-      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+      - proxy
 
 volumes:
   traefik_letsencrypt:
