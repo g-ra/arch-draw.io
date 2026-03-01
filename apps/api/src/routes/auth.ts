@@ -50,7 +50,17 @@ export async function authRoutes(app: FastifyInstance) {
       const secret = generateTOTPSecret();
       const qrCode = await generateQRCode(secret, email);
 
-      // If code provided, verify and save
+      // Save secret immediately (before verification)
+      try {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { totpSecret: secret },
+        });
+      } catch (error) {
+        return reply.code(500).send({ error: "Database error" });
+      }
+
+      // If code provided, verify it
       if (code) {
         const isValid = verifyTOTPCode(secret, code, isDevMode);
 
@@ -68,16 +78,7 @@ export async function authRoutes(app: FastifyInstance) {
           return reply.code(401).send({ error: "Invalid TOTP code" });
         }
 
-        // Save secret and reset rate limiter
-        try {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { totpSecret: secret },
-          });
-        } catch (error) {
-          return reply.code(500).send({ error: "Database error" });
-        }
-
+        // Reset rate limiter on success
         if (!isDevMode) {
           rateLimiter.reset(email);
         }
@@ -95,12 +96,12 @@ export async function authRoutes(app: FastifyInstance) {
       }
 
       // No code provided, return QR code for setup
-      return { qrCode, message: "Scan QR code with authenticator app" };
+      return { needsSetup: true, qrCode, secret };
     }
 
     // Case 2: User has TOTP secret (existing user)
     if (!code) {
-      return reply.code(400).send({ error: "TOTP code required" });
+      return reply.code(400).send({ error: "Code required" });
     }
 
     // Verify code
