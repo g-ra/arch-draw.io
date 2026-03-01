@@ -34,6 +34,9 @@ RUN npm install -g pnpm@10.30.3
 
 WORKDIR /app
 
+# Set Prisma engine mirror for downloads without VPN
+ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
+
 # Copy workspace files for production install
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml .npmrc ./
 COPY apps/api/package.json ./apps/api/
@@ -45,11 +48,10 @@ RUN pnpm install --frozen-lockfile
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 
-# Copy generated Prisma client from builder
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
-
 WORKDIR /app/apps/api
+
+# Generate Prisma client with mirror
+RUN pnpm prisma generate
 
 # Create uploads directory
 RUN mkdir -p uploads
