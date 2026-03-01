@@ -1,23 +1,68 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16-alpine
     container_name: techflow_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: techflow
-      POSTGRES_PASSWORD: techflow_secret
-      POSTGRES_DB: techflow
+      POSTGRES_USER: ${POSTGRES_USER:-techflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-techflow_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-techflow}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U techflow"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-techflow}"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - techflow_network
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: techflow_api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-techflow}:${POSTGRES_PASSWORD:-techflow_secret}@postgres:5432/${POSTGRES_DB:-techflow}
+      JWT_SECRET: ${JWT_SECRET}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      PORT: 3001
+      NODE_ENV: production
+    ports:
+      - "${API_PORT:-3001}:3001"
+    volumes:
+      - api_uploads:/app/apps/api/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - techflow_network
+    command: sh -c "cd /app/apps/api && npx prisma migrate deploy && node dist/index.js"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+    container_name: techflow_web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-80}:80"
+    depends_on:
+      - api
+    networks:
+      - techflow_network
 
 volumes:
   postgres_data:
+  api_uploads:
+
+networks:
+  techflow_network:
+    driver: bridge

@@ -33,7 +33,9 @@ pnpm install
 ### 3. Start PostgreSQL
 
 ```bash
-docker compose up -d
+docker compose -f docker-compose.dev.yml up -d
+# или
+make dev
 ```
 
 ### 4. Configure environment
@@ -158,6 +160,28 @@ cd apps/api && pnpm db:migrate
 # Reset database
 cd apps/api && pnpm exec prisma migrate reset
 ```
+
+## Production Deployment
+
+Для деплоя на сервер используй Docker Compose:
+
+```bash
+# Быстрый старт
+./deploy.sh
+
+# Или через Makefile
+make prod
+```
+
+Подробная инструкция: [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+**Что включено:**
+- Multi-stage Docker builds для оптимального размера образов
+- Nginx с проксированием API и WebSocket
+- Автоматические миграции БД при старте
+- Health checks и restart policies
+- Volume для загруженных файлов
+- Production-ready конфигурация
 
 ## Roadmap
 
