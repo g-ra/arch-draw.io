@@ -46,7 +46,6 @@ export function verifyTOTPCode(secret: string, code: string, isDevMode: boolean)
     const result = verifySync({
       secret,
       token: code,
-      window: 1,
     });
     return result.valid;
   } catch {
